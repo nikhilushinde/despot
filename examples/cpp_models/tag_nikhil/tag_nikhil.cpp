@@ -41,9 +41,7 @@ bool TagNikhil::Step(State& state, double rand_num, ACT_TYPE action, double& rew
     * returned:
     *   - bool: whether the state is a terminal state and the "game" should be ended. 
     */ 
-    // dynamic cast since the inheritance is downwards (State is the parent class of TagStateNikhil and not vice versa)
-    // use static casts for upwards inheritance. 
-    TagStateNikhil *tagStateNikhil_state = dynamic_cast<TagStateNikhil*>(&state);
+    TagStateNikhil *tagStateNikhil_state = static_cast<TagStateNikhil*>(&state);
     bool terminal_state = tagStateNikhil_state->Step(action, rand_num, reward, obs);
     return terminal_state;
 }
@@ -57,7 +55,7 @@ double TagNikhil::ObsProb(OBS_TYPE obs, const State& state, ACT_TYPE action) con
     *   - state: state from which finding the probability of observing obs
     *   - action: action taken to get to state
     */ 
-    const TagStateNikhil *tagStateNikhil_state = dynamic_cast<const TagStateNikhil *>(&state);
+    const TagStateNikhil *tagStateNikhil_state = static_cast<const TagStateNikhil *>(&state);
     return tagStateNikhil_state->ObsProb(obs, action);
 }
 
@@ -74,5 +72,43 @@ State* TagNikhil::CreateStartState(std::string type = "DEFAULT") const{
     return new TagStateNikhil();
 }
 
+Belief* TagNikhil::InitialBelief(const State* start, std::string type = "DEFAULT") const {
+    /*
+    * Creates the initial belief for the problem. 
+    * args:
+    *   - start: a start state that can be used to bias the initial belief
+    *   - type: a string that can be used to select different types of priors for the belief
+    * returns:
+    *   - belief: The type belief is in the despot code
+    */ 
+    // only support "DEFAULT" and "PARTICLE" belief types - uniform belief over all the positions
+    if (type == "DEFAULT" || type == "PARTICLE") {
+        vector <State*> particles;
+        double uniform_particle_weight = (1/(NUM_XY_POS_TAG_NIKHIL_STATE * NUM_XY_POS_TAG_NIKHIL_STATE));
+        TagStateNikhil *new_particle_state;
+        for (int rob_num = 0; rob_num < NUM_XY_POS_TAG_NIKHIL_STATE; rob_num++) {
+            for (int opp_num = 0; opp_num < NUM_XY_POS_TAG_NIKHIL_STATE; opp_num++) {
+                new_particle_state = static_cast<TagStateNikhil *>(Allocate(-1, uniform_particle_weight));
+                new_particle_state->InitStateFromInts(rob_num, opp_num);
+                particles.push_back(new_particle_state);
+            }
+        }
+        return new ParticleBelief(particles, this);
+    } else {
+        cerr << "[TagNikhil::InitialBelief] Unsupported belief type: " << type << endl;
+		exit(1);
+    }
+}
+
+State* TagNikhil::Allocate(int state_id, double weight) const {
+    /*
+    * REQUIRED: allocate memory for the dsepot algorithm using their specific memory handling
+    * Sets the state id and the weight and returns a pointer to the state that has been allocated
+    */ 
+    TagStateNikhil* state_ptr = memory_pool_.Allocate();
+	state_ptr->state_id = state_id;
+	state_ptr->weight = weight;
+	return state_ptr;
+}
 
 }

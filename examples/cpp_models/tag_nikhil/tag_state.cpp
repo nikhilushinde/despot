@@ -9,10 +9,58 @@ TagStateNikhil::TagStateNikhil() {
     /*
     * Constructor for the tag environment - initializes the robot and opponent to a random position in the environment
     */
+    int robPosRandInt, oppPosRandInt;
+    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE;
+    oppPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
+
+    this->InitStateFromInts(robPosRandInt, oppPosRandInt);
+}
+
+TagStateNikhil::TagStateNikhil(int robPosIntIndex, int oppPosIntIndex) {
+    /*
+    * Constructor for the tag environment - initializes the robot and opponent to a random position in the environment
+    * robotPosIntIndex and oppPosIntIndex are integers between 0 and 29 exclusive to indicate the position that the robot
+    * and the opponent should be initialized in. 
+    * 
+    * args:
+    *   - robPosIntIndex: int [0,29) indicating robot position
+    *   - oppPosIntIndex: int [0,29) indicating opponent position
+    */
     // select the robot and opponent positions uniformly at random. 
     /* Methodology: there are 29 * 29 possible states in total. Get the (x,y) positions that
     correspond to each of the 29 possible (x,y) states. Then select 2 random numbers between 0 and 29
     (x,y):rob_rand_num corresponds to the robot position and (x,y):opp_rand_num corresponds to the opp pos*/
+    this->InitStateFromInts(robPosIntIndex, oppPosIntIndex);
+}
+
+TagStateNikhil::TagStateNikhil(int robX, int robY, int oppX, int oppY) {
+    /*
+    * Constructor that takes in the arguments for the robot and opponent position
+    * args:
+    *   - robX, robY: robot x and robot y positions - must be valid x y positions in the map
+    *   - oppX, oppY: opponent x and y positions - must be valid positions in the map
+    */
+    this->InitState(robX, robY, oppX, oppY);
+}
+
+void TagStateNikhil::IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, int &retRobY, int &retOppX, int &retOppY) {
+    /*
+    * Converts the robPosInt and the oppPosInt to (x,y) positions for the robot and the opponent
+    * args:
+    *   - robPosInt: integer between [0,29) indicating the position for the robot 
+    *   - oppPosInt: integer between [0,29) indicating the position for the opponent
+    * returns: by pass by reference:
+    *   - retRobX, retRobY, retOppX, retOppY 
+    */  
+    /* Methodology: there are 29 * 29 possible states in total. Get the (x,y) positions that
+    correspond to each of the 29 possible (x,y) states. Then select 2 random numbers between 0 and 29
+    (x,y):rob_rand_num corresponds to the robot position and (x,y):opp_rand_num corresponds to the opp pos*/
+    if (robPosInt < 0 || robPosInt >= NUM_XY_POS_TAG_NIKHIL_STATE || oppPosInt < 0 || oppPosInt >= NUM_XY_POS_TAG_NIKHIL_STATE) {
+        // throw an error if the integers specifying the robot pos or opponent pos are incorrect
+        cerr << "Integers used to specify robot position and opponent position are out of bounds: " << robPosInt << ", " << oppPosInt << endl;
+        exit(1);
+    }
+
     int x_positions[NUM_XY_POS_TAG_NIKHIL_STATE];
     int y_positions[NUM_XY_POS_TAG_NIKHIL_STATE];
     int count = 0;
@@ -29,41 +77,36 @@ TagStateNikhil::TagStateNikhil() {
             }
         }
     }
+    retRobX = x_positions[robPosInt];
+    retRobY = y_positions[robPosInt];
+    retOppX = x_positions[oppPosInt];
+    retOppY = y_positions[oppPosInt];
+}
+
+void TagStateNikhil::InitStateFromInts(int robPosInt, int oppPosInt) {
+    /*
+    * Initialize the states from integers that specify the robot and opponent positions
+    * args:
+    *   - robPosInt: integer between [0,29) indicating the position for the robot 
+    *   - oppPosInt: integer between [0,29) indicating the position for the opponen
+    */ 
+
     int robPosRandInt, oppPosRandInt;
     robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE;
     oppPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
 
-    this->envState.robX = x_positions[robPosRandInt];
-    this->envState.robY = y_positions[robPosRandInt];
-    this->envState.oppX = x_positions[oppPosRandInt];
-    this->envState.oppY = y_positions[oppPosRandInt];
-
-    //initialize the map of the environment - where the index in the string array is the y axis height and the index in the string is the x axis length 
-    strcpy(this->map[4], "xxxxx___xx");
-    strcpy(this->map[3], "xxxxx___xx");
-    strcpy(this->map[2], "xxxxx___xx");    
-    strcpy(this->map[1], "__________");
-    strcpy(this->map[0], "__________");
-
-    // initialize the reward constants
-    this->movementReward = -1;
-    this->tagReward = 10;
-    this->noTagReward = -10;
-
-    array <ACT_TYPE, 5> allActionsTemp = {NORTH, SOUTH, EAST, WEST, TAG};
-    // copies the array to the attribute
-    this->allActions = allActionsTemp;
+    int setRobX, setRobY, setOppX, setOppY;
+    this->IntToPosCoords(robPosRandInt, oppPosRandInt, setRobX, setRobY, setOppX, setOppY);
+    this->InitState(setRobX, setRobY, setOppX, setOppY);
 }
 
-TagStateNikhil::TagStateNikhil(int robX, int robY, int oppX, int oppY) {
+void TagStateNikhil::InitState(int robX, int robY, int oppX, int oppY) {
     /*
-    * Constructor that takes in the arguments for the robot and opponent position
+    * State initializer that takes in the arguments for the robot and opponent position
     * args:
     *   - robX, robY: robot x and robot y positions - must be valid x y positions in the map
     *   - oppX, oppY: opponent x and y positions - must be valid positions in the map
     */
-
-    
     this->envState.robX = robX;
     this->envState.robY = robY;
     this->envState.oppX = oppX;

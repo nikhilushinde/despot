@@ -40,7 +40,13 @@ struct OutOfBoundsException : public std::exception {
 class TagStateNikhil: public State {
 public:
     TagStateNikhil(); // no args constructor
+    TagStateNikhil(int robPosIntIndex, int oppPosIntIndex); // constructor where you specify a number from 0 to 29 exclusive for the robot and opponent position
     TagStateNikhil(int robX, int robY, int oppX, int oppY); // constructor where you specify the robot and opp positions
+    
+    void IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, int &retRobY, int &retOppX, int &retOppY); // 
+    void InitState(int robX, int robY, int oppX, int oppY); // initialize the state of the environment with the robot and opponent positions
+    void InitStateFromInts(int robPosInt, int oppPosInt); // Initialize the state of the environment from integers that specify the robot and opponent positions
+    
     void Render(); // print the environment out to terminal
 
     bool Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation); //steps in the environment and returns reward and observation - mutates the environment state
