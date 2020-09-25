@@ -48,5 +48,18 @@ bool TagNikhil::Step(State& state, double rand_num, ACT_TYPE action, double& rew
     return terminal_state;
 }
 
+double TagNikhil::ObsProb(OBS_TYPE obs, const State& state, ACT_TYPE action) const {
+    /*
+    * This function returns the probability of seeing observation obs from state s given that 
+    * we got to state s using action a. 
+    * args:
+    *   - obs: the observation seen from state gotten to by action
+    *   - state: state from which finding the probability of observing obs
+    *   - action: action taken to get to state
+    */ 
+    const TagStateNikhil *tagStateNikhil_state = dynamic_cast<const TagStateNikhil *>(&state);
+    return tagStateNikhil_state->ObsProb(obs, action);
+}
+
 
 }

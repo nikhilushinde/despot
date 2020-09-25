@@ -424,6 +424,32 @@ OBS_TYPE TagStateNikhil::observe() {
     }
 }
 
+double TagStateNikhil::ObsProb(OBS_TYPE obs, ACT_TYPE action) const{
+    /*
+    * This function returns the probability of seeing the observation from state s 
+    * given that you got to state s by taking action a. This is a constant function 
+    * meaning that it does not alter the that of the environment
+    * args:
+    *   - obs: the observation that we are trying to find the probability of seeing from the current state
+    *   - a: the action taken to get to the current state of the environment. 
+    * returns:
+    *   - double: representing the probability of seeing the given obs from the current state gotten to by action a
+    */ 
+    if (obs == 1) {
+        if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
+            return 1.0; // can only observe 1 when the robot and the opponet are on the same spot
+        } else {
+            return 0.0; // cannot observe 1 if the robot and the opponent are not on the same spot
+        }
+    } else if (obs == 0) {
+        if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
+            return 0.0; // can only observe 1 when the robot and the oppoonent are in the ssame spot
+        } else {
+            return 1.0; // only observe 0 if the robot and the opponent are not on the same spot
+        }
+    }
+}
+
 bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation) {
     /*
     * Takes a step in the environment: - the return is true if the game has ended and the opponent is tagged:

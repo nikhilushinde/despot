@@ -46,6 +46,7 @@ public:
     void oppStepRandom(); // Steps the opponent in the environment according to the opponent policy - generate random number to use in deciding the random action of the opponent
     
     OBS_TYPE observe(); // returns the boolean observation - true if robot and opponent on the same grid position
+    double ObsProb(OBS_TYPE obs, ACT_TYPE action) const;
 
     // define the possible actions 
     enum {
