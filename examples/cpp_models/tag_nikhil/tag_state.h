@@ -22,6 +22,9 @@ namespace despot {
 #define LENGTH_TAG_NIKHIL_STATE 10
 #define HEIGHT_TAG_NIKHIL_STATE 5
 #define NUM_XY_POS_TAG_NIKHIL_STATE 29
+#define TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE 10
+#define TAG_REWARD_FAIL_TAG_NIKHIL_STATE -10
+#define TAG_REWARD_MOVEMENT_TAG_NIKHIL_STATE -1
 
 // structure to hold the state of the environment
 struct tagStateStruct {

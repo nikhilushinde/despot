@@ -100,6 +100,17 @@ Belief* TagNikhil::InitialBelief(const State* start, std::string type = "DEFAULT
     }
 }
 
+double TagNikhil::GetMaxReward() const {
+    /*
+    * Returns the maximum possible reward value achievable. 
+    */ 
+    return TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE;
+}
+ValuedAction TagNikhil::GetBestAction() const {
+    // TODO: FINISH THIS FUNCTION. 
+}
+
+
 State* TagNikhil::Allocate(int state_id, double weight) const {
     /*
     * REQUIRED: allocate memory for the dsepot algorithm using their specific memory handling
@@ -109,6 +120,24 @@ State* TagNikhil::Allocate(int state_id, double weight) const {
 	state_ptr->state_id = state_id;
 	state_ptr->weight = weight;
 	return state_ptr;
+}
+
+State* TagNikhil::Copy(const State* particle) const {
+    /*
+    * Creates a copy of the state whose pointer is input
+    */ 
+    // TODO: FINISH COPY CONSTRUCTOR FOR TagStateNikhil class before you can use this function
+    cerr << " TODO: HAVE NOT COMPLETED THE COPY CONSTRUCTOR FOR TagStateNikhil " << type << endl;
+	exit(1);
+
+    TagStateNikhil* state_ptr = memory_pool_.Allocate();
+    *state_ptr = *static_cast<const TagStateNikhil*>(particle);
+    state_ptr->SetAllocated();
+    return state_ptr;
+}
+
+void TagNikhil::Free(State* particle) const {
+    memory_pool_.Free(static_cast<TagStateNikhil*>(particle));
 }
 
 }

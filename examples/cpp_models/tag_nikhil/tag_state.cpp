@@ -125,9 +125,9 @@ void TagStateNikhil::InitState(int robX, int robY, int oppX, int oppY) {
     strcpy(this->map[0], "__________");
 
     // initialize the reward constants
-    this->movementReward = -1;
-    this->tagReward = 10;
-    this->noTagReward = -10;
+    this->movementReward = TAG_REWARD_MOVEMENT_TAG_NIKHIL_STATE;
+    this->tagReward = TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE;
+    this->noTagReward = TAG_REWARD_FAIL_TAG_NIKHIL_STATE;
 
     array <ACT_TYPE, 5> allActionsTemp = {NORTH, SOUTH, EAST, WEST, TAG};
     // copies the array to the attribute
