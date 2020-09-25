@@ -19,6 +19,9 @@ namespace despot {
 
 #define NUM_OBSERVATIONS_TAG_NIKHIL_STATE 2
 #define NUM_ACTIONS_TAG_NIKHIL_STATE 5
+#define LENGTH_TAG_NIKHIL_STATE 10
+#define HEIGHT_TAG_NIKHIL_STATE 5
+#define NUM_XY_POS_TAG_NIKHIL_STATE 29
 
 // structure to hold the state of the environment
 struct tagStateStruct {
@@ -62,8 +65,8 @@ private:
     int randomNumToInt(float actionProbs[], int actionProbsSize, float randomNum); // takes a probability distribution ActionProbs and deterministically returns the index that corresponds to having having used the randomNum
 
     tagStateStruct envState;
-    static const int length = 10;
-    static const int height = 5;
+    static const int length = LENGTH_TAG_NIKHIL_STATE;
+    static const int height = HEIGHT_TAG_NIKHIL_STATE;
     char map[height][length + 1];
 
     std::array <ACT_TYPE, 5> allActions;

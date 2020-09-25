@@ -9,25 +9,34 @@ TagStateNikhil::TagStateNikhil() {
     /*
     * Constructor for the tag environment - initializes the robot and opponent to a random position in the environment
     */
-    //randomized the robot position  
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    srand(seed);
-    this->envState.robY = rand()%this->height;
-    if (this->envState.robY <= 1){
-        this->envState.robX = rand()%this->length;
-    } else {
-        // a random number either 5,6,7
-        this->envState.robX = rand()%(8-5) + 5;
+    // select the robot and opponent positions uniformly at random. 
+    /* Methodology: there are 29 * 29 possible states in total. Get the (x,y) positions that
+    correspond to each of the 29 possible (x,y) states. Then select 2 random numbers between 0 and 29
+    (x,y):rob_rand_num corresponds to the robot position and (x,y):opp_rand_num corresponds to the opp pos*/
+    int x_positions[NUM_XY_POS_TAG_NIKHIL_STATE];
+    int y_positions[NUM_XY_POS_TAG_NIKHIL_STATE];
+    int count = 0;
+    for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
+        for (int y = 0; y < HEIGHT_TAG_NIKHIL_STATE; y++) {
+            if (x >= 5 && x <= 7) {
+                x_positions[count] = x;
+                y_positions[count] = y;
+            } else {
+                if (y <= 1) {
+                    x_positions[count] = x;
+                    y_positions[count] = y;
+                }
+            }
+        }
     }
+    int robPosRandInt, oppPosRandInt;
+    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE;
+    oppPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
 
-    // randomize the opponent position 
-    this->envState.oppY = rand()%this->height;
-    if (this->envState.oppY <= 1){
-        this->envState.oppX = rand()%this->length;
-    } else {
-        // a random number either 5,6,7
-        this->envState.oppX = rand()%(8-5) + 5;
-    }
+    this->envState.robX = x_positions[robPosRandInt];
+    this->envState.robY = y_positions[robPosRandInt];
+    this->envState.oppX = x_positions[oppPosRandInt];
+    this->envState.oppY = y_positions[oppPosRandInt];
 
     //initialize the map of the environment - where the index in the string array is the y axis height and the index in the string is the x axis length 
     strcpy(this->map[4], "xxxxx___xx");

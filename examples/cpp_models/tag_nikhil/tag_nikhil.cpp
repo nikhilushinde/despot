@@ -61,5 +61,18 @@ double TagNikhil::ObsProb(OBS_TYPE obs, const State& state, ACT_TYPE action) con
     return tagStateNikhil_state->ObsProb(obs, action);
 }
 
+State* TagNikhil::CreateStartState(std::string type = "DEFAULT") const{
+    /*
+    * Creates a random start state of type TagNikhilState. This state is allocated
+    * in dynamic memory and the pointer to this state is returned. 
+    * args:
+    *   - type: string indicating the type of method used to generate the random start state 
+    *           can be used for different priors on the random start state
+    * returns:
+    *   - pointer of type state to the random state object that was created in dynamic memory
+    */ 
+    return new TagStateNikhil();
+}
+
 
 }
