@@ -45,7 +45,7 @@ public:
     int NumActions() const;
 
     /* Deterministic simulative model */
-    bool Step(State& state, double rand_num, ACT_TYPE action, double& reward, OBS_TYPE& obs);
+    bool Step(State& state, double rand_num, ACT_TYPE action, double& reward, OBS_TYPE& obs) const;
 
     /* Functions related to beliefs and starting states */
     /* Returns the probability of viewing the observation obs from state given you transitioned to it from action*/

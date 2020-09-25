@@ -409,22 +409,22 @@ void TagStateNikhil::oppStepRandom() {
     }
 }
 
-bool TagStateNikhil::observe() {
+OBS_TYPE TagStateNikhil::observe() {
     /*
-    * Returns a boolean observation 
+    * Returns a OBS_TYPE observation - just an integer
     * returns:
-    *   - observation - true: if the robot and opponent are in the same position 
-    *       - false: otherwise
+    *   - observation - 1: if the robot and opponent are in the same position 
+    *                 - 0: otherwise
     * */
 
     if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
-        return true;
+        return 1; 
     } else {
-        return false;
+        return 0;
     }
 }
 
-bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, bool &observation) {
+bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation) {
     /*
     * Takes a step in the environment: - the return is true if the game has ended and the opponent is tagged:
     * 
@@ -450,7 +450,7 @@ bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, bool &o
             return gameOver;
         } else {
             observation = observe();
-            return false;
+            return gameOver;
         }
     }
 

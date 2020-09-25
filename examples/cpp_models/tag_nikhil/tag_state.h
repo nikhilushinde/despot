@@ -40,12 +40,12 @@ public:
     TagStateNikhil(int robX, int robY, int oppX, int oppY); // constructor where you specify the robot and opp positions
     void Render(); // print the environment out to terminal
 
-    bool Step(ACT_TYPE act, float randomNum, double &reward, bool &observation); //steps in the environment and returns reward and observation - mutates the environment state
+    bool Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation); //steps in the environment and returns reward and observation - mutates the environment state
     bool robStep(ACT_TYPE act, double &reward); // steps the robot in the environment with action sees reward
     void oppStep(float randomNum); // Steps the opponent in the environment according to the opponent policy - takes in random number to deterministically select action
     void oppStepRandom(); // Steps the opponent in the environment according to the opponent policy - generate random number to use in deciding the random action of the opponent
     
-    bool observe(); // returns the boolean observation - true if robot and opponent on the same grid position
+    OBS_TYPE observe(); // returns the boolean observation - true if robot and opponent on the same grid position
 
     // define the possible actions 
     enum {
