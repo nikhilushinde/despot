@@ -1,6 +1,9 @@
 #ifndef TAG_NIKHIL_H
 #define TAG_NIKHIL_H
 
+// standard includes
+#include <map>
+
 // the despot related includes
 #include <despot/interface/pomdp.h>
 #include <despot/core/mdp.h>
@@ -65,6 +68,8 @@ public:
     State* Copy(const State* particle) const;
     void Free(State* particle) const;
     int NumActiveParticles() const;
+
+    void MostLikelyRobPosition(const vector<State*>& particles, int &retRobX, int &retRobY) const; // get the most likely robot position from a set of particles
 
     /* END: REQUIRED FUNCTIONS FOR DESPOT */
     /* ======= Display Functions: ========*/

@@ -92,7 +92,7 @@ void TagStateNikhil::InitStateFromInts(int robPosInt, int oppPosInt) {
     */ 
 
     int robPosRandInt, oppPosRandInt;
-    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE;
+    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
     oppPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
 
     int setRobX, setRobY, setOppX, setOppY;
@@ -160,11 +160,13 @@ void TagStateNikhil::Render() {
     this->map[this->envState.oppY][this->envState.oppX] = '_';
 }
 
-bool TagStateNikhil::inEnv(tagStateStruct state) {
+bool TagStateNikhil::inEnv(tagStateStruct state) const{
     /* 
     * Boolean function that returns if the specified state is in the valid environment 
     * args:
     *   - state: a state struct representing the environment that you want to test
+    * returns:
+    *   - True if the state is in the Environment, Else returns False
     */
 
     if ((state.robX < 0 || state.robX >= this->length || state.oppX < 0 || state.oppX >= this->length) ||
@@ -545,6 +547,73 @@ bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYP
     observation = observe();
 
     return gameOver;
+}
+
+tagStateStruct TagStateNikhil::get_envState() const{
+    /*
+    * Get the environment state 
+    */ 
+    return envState;
+}
+
+ACT_TYPE TagStateNikhil::getOppositeAction(ACT_TYPE action) const {
+    /*
+    * Get the action that double backs on the specified action
+    * args:
+    *   - action
+    * returns:
+    *   - action that doubles back on action
+    */ 
+    if (action == TAG) {
+        return TAG;
+    } else if (action == EAST) {
+        return WEST;
+    } else if (action == WEST) {
+        return EAST;
+    } else if (action == NORTH) {
+        return SOUTH;
+    } else if (action == SOUTH) {
+        return NORTH;
+    }
+}
+
+bool TagStateNikhil::isInvalidStep(ACT_TYPE action, int testRobX, int testRobY) const{
+    /*
+    * Check if taking the action from the given robot position results in a valid robot position. 
+    * args:
+    *   - testRobX: the x value to start from 
+    *   - testRobY: the y value to start from
+    * returns:
+    *   - boolean value: True if the step is invalid - runs into walls/ outside the environment else False
+    */ 
+    // step just the robot
+    double reward;
+    tagStateStruct tempState;
+    tempState = this->envState;
+    tempState.robX = testRobX;
+    tempState.robY = testRobY;
+
+    if (action == NORTH) {
+        // move one up
+        tempState.robY = tempState.robY + 1;
+    } else if (action == SOUTH) {
+        // move one down 
+        tempState.robY = tempState.robY - 1;
+    } else if (action == EAST) {
+        // move one left 
+        tempState.robX = tempState.robX + 1;
+    } else if (action == WEST) {
+        // move one right
+        tempState.robX = tempState.robX - 1;
+    }
+
+    if (inEnv(tempState)) {
+        // false indicates that the environment from the step was valid
+        return false;
+    } else {
+        // true indicates that the resultant step was invalid as the robot position was not in the environment
+        return true;
+    }
 }
 
 } // end namespace despot

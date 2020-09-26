@@ -34,6 +34,12 @@ struct tagStateStruct {
     int oppY;
 };
 
+// structure to hold one position in the environment
+struct tagCoordsStruct {
+    int x;
+    int y;
+};
+
 struct OutOfBoundsException : public std::exception {
    const char * what () const throw () {
       return "Out of bounds exception! - the specified state was out of bounds of the environment";
@@ -60,6 +66,11 @@ public:
     OBS_TYPE observe(); // returns the boolean observation - true if robot and opponent on the same grid position
     double ObsProb(OBS_TYPE obs, ACT_TYPE action) const;
 
+    tagStateStruct get_envState() const; // get the state - the robot and opponent
+    ACT_TYPE getOppositeAction(ACT_TYPE action) const; // returns the action that double backs on the action that is fed in
+    bool isInvalidStep(ACT_TYPE action, int testRobX, int testRobY) const; // check if taking the specified action from the specified robot position is valid/doesnt run into walls - returns true if it is invalid 
+    
+
     // define the possible actions 
     enum {
         NORTH = 0, 
@@ -69,7 +80,7 @@ public:
         TAG = 4
     };
 private:
-    bool inEnv(tagStateStruct state); // checks if a given state is in the environment - if in env return true else false
+    bool inEnv(tagStateStruct state) const; // checks if a given state is in the environment - if in env return true else false
     void oppPolicyDistribution(float retOppActionProbs[]); // using the state of the environment populates the probability distribution of opponent actions
     int randomNumToInt(float actionProbs[], int actionProbsSize, float randomNum); // takes a probability distribution ActionProbs and deterministically returns the index that corresponds to having having used the randomNum
 
