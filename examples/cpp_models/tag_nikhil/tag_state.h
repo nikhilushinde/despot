@@ -57,6 +57,7 @@ public:
     void InitStateFromInts(int robPosInt, int oppPosInt); // Initialize the state of the environment from integers that specify the robot and opponent positions
     
     void Render(); // print the environment out to terminal
+    void RenderState(ostream& out) const; // prints the environment out to the ostream - required for the PrintState function in DESPOT
 
     bool Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation); //steps in the environment and returns reward and observation - mutates the environment state
     bool robStep(ACT_TYPE act, double &reward); // steps the robot in the environment with action sees reward

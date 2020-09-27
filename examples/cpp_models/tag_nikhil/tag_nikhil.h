@@ -82,8 +82,6 @@ public:
     virtual void PrintAction(ACT_TYPE action, std::ostream& out = std::cout) const = 0;
     /* Prints a belief. */
     virtual void PrintBelief(const Belief& belief, std::ostream& out = std::cout) const = 0;
-    /* Returns number of allocated particles. */
-    virtual int NumActiveParticles() const = 0;
 
 private:
 

@@ -134,6 +134,14 @@ public:
     }
 };
 
+/*
+TODO: connect the upper bound and lower bound classes to the actual despot solver however that is to be done
+see if you actually have to implement the get_best_action function - check the tag thing etc. - if you do 
+have to implement this then just do the tag policy where you take a random action that does not run into walls. 
+
+After this configure the print functions properly 
+Then connect it to DESPOT via the cmake and make functions and then test. 
+*/
 
 /*
 * ***********************************************************************************
@@ -316,6 +324,54 @@ void TagNikhil::MostLikelyRobPosition(const vector<State*>& particles, int &retR
 
     retRobX = maxElement.x;
     retRobY = maxElement.y;
+}
+
+void TagNikhil::PrintState(const State& state, std::ostream& out = std::cout) const {
+    /*
+    * Prints the state using the states RenderState function to the outstream
+    */ 
+    const TagStateNikhil &localState = static_cast<const TagStateNikhil &>(state);
+    localState.RenderState(out);
+}
+
+void TagNikhil::PrintObs(const State& state, OBS_TYPE obs, std::ostream& out = std::cout) const {
+    /*
+    * Print what the observation that is seen from the state means to the out stream. 
+    */ 
+    if (obs == 1) {
+        // the robot and the opponent are in the same spot
+        out << "Robot is on top of the Opponent";
+    } else {
+        const TagStateNikhil &tempTagStateNikhil = static_cast<const TagStateNikhil &>(state);
+        tagStateStruct environmentState = tempTagStateNikhil.get_envState();
+        out << "Robot at (" << environmentState.robX << ", " << environmentState.robY << ")" << endl;
+    }
+}
+
+void TagNikhil::PrintAction(ACT_TYPE action, std::ostream& out = std::cout) const {
+    /*
+    * Print what the action means to the outstream.
+    */  
+    if (action == TAG) {
+        out << "Tag" << endl;
+    } else if (action == NORTH) {
+        out << "North" << endl;
+    } else if (action == SOUTH) {
+        out << "South" << endl;
+    } else if (action == WEST) {
+        out << "West" << endl;
+    } else if (action == EAST) {
+        out << "East" << endl;
+    } else {
+        out << "Wrong Action" << endl;
+    }
+}
+
+void TagNikhil::PrintBelief(const Belief& belief, std::ostream& out = std::cout) const {
+    /*
+    * Print what the belief is to the outstream. 
+    */ 
+    // Dont implement as too much to print - just do nothing for this function
 }
 
 }

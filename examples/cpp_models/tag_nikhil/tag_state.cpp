@@ -134,7 +134,7 @@ void TagStateNikhil::InitState(int robX, int robY, int oppX, int oppY) {
     this->allActions = allActionsTemp;
 }
 
-void TagStateNikhil::Render() {
+void TagStateNikhil::Render(){
     /* look through the envState and change change the string to render the state appropriately 
         - R: represents robot 
         - Z: represents the opponent 
@@ -158,6 +158,30 @@ void TagStateNikhil::Render() {
     // return map back to base configuration without the robot and opponent in it 
     this->map[this->envState.robY][this->envState.robX] = '_';
     this->map[this->envState.oppY][this->envState.oppX] = '_';
+}
+
+void TagStateNikhil::RenderState(ostream &out) const{
+    /* look through the envState and change change the string to render the state appropriately 
+        - R: represents robot 
+        - Z: represents the opponent 
+        - Q: represents when the robot is on top of the opponent 
+        - 0: represents a blank space in the environment 
+        - x: non occupiable space in the environment 
+    */
+    for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
+        for (int y = 0; y < LENGTH_TAG_NIKHIL_STATE; y++) {
+            if (x == envState.robX && y == envState.robY && x == envState.oppX && y == envState.oppY) {
+                out << "Q";
+            } else if (x == envState.robX && y == envState.robY) {
+                out << "R";
+            } else if (x == envState.oppX && y == envState.oppY) {
+                out << "Z";
+            } else {
+                out << this->map[y][x];
+            }
+        }
+        out << endl;
+    }
 }
 
 bool TagStateNikhil::inEnv(tagStateStruct state) const{
