@@ -63,7 +63,9 @@ public:
 
     /* Bound-related functions.*/
     double GetMaxReward() const;
+    ScenarioUpperBound* CreateScenarioUpperBound(std::string name = "DEFAULT", std::string particle_bound_name = "DEFAULT") const;
     ValuedAction GetBestAction() const;
+    ScenarioLowerBound* CreateScenarioLowerBound(std::string name = "DEFAULT", std::string particle_bound_name = "DEFAULT") const;
     // NOTE: ADD THE MORE ADVANCED BOUND RELATED FUNCTIONS
 
     /* Memory management.*/

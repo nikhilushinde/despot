@@ -104,7 +104,7 @@ public:
     }
 
     using ParticleUpperBound::Value;
-    double Value(const State &s) {
+    double Value(const State &s) const{
         const TagStateNikhil& state = static_cast<const TagStateNikhil&>(s);
         double dist = ManhattanDistanceCalc(state.get_envState());
         double discountedValue = -(1 - Globals::Discount(dist)) / (1 - Globals::Discount())
@@ -247,6 +247,18 @@ double TagNikhil::GetMaxReward() const {
     return TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE;
 }
 
+ScenarioUpperBound* TagNikhil::CreateScenarioUpperBound(std::string name = "DEFAULT", std::string particle_bound_name = "DEFAULT") const{
+    /*
+    * Create the Upper Bound for the TagNikhil class. 
+    */ 
+    if (name == "DEFAULT" || name == "TRIVIAL" || name == "MANHATTAN") {
+        return new TagNikhilManhattanUpperBound(this);
+    } else {
+        cerr << "Specified Upper Bound: " << name << " is NOT SUPPORTED!" << endl;
+        exit(1);
+    }
+}
+
 ValuedAction TagNikhil::GetBestAction() const {
     /*
     * This function returns the best action to be taken given nothing. This action is used to calculate the 
@@ -257,6 +269,21 @@ ValuedAction TagNikhil::GetBestAction() const {
     return ValuedAction(NORTH, TAG_REWARD_MOVEMENT_TAG_NIKHIL_STATE); 
     // the function in the DESPOT code returns (0, -1) 0 is NORTH in "coord.h" that has the enum to define the actions
 
+}
+
+ScenarioLowerBound* TagNikhil::CreateScenarioLowerBound(string name = "DEFAULT", string particle_bound_name = "DEFAULT") const{
+    /*
+    * Creates the lower bound for the TagNikhil class. 
+    */ 
+    const DSPOMDP *model = this;
+    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SHR") {
+        // Use the smart history based default rollout policy to create the lower bound
+        return new RandomPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
+        // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
+    } else {
+        cerr << "Specified Lower Bound " << name << " is NOT SUPPORTED!";
+        exit(1);
+    }
 }
 
 /*
