@@ -199,7 +199,7 @@ double TagNikhil::ObsProb(OBS_TYPE obs, const State& state, ACT_TYPE action) con
     return tagStateNikhil_state->ObsProb(obs, action);
 }
 
-State* TagNikhil::CreateStartState(std::string type = "DEFAULT") const{
+State* TagNikhil::CreateStartState(std::string type) const{
     /*
     * Creates a random start state of type TagNikhilState. This state is allocated
     * in dynamic memory and the pointer to this state is returned. 
@@ -212,7 +212,7 @@ State* TagNikhil::CreateStartState(std::string type = "DEFAULT") const{
     return new TagStateNikhil();
 }
 
-Belief* TagNikhil::InitialBelief(const State* start, std::string type = "DEFAULT") const {
+Belief* TagNikhil::InitialBelief(const State* start, std::string type) const {
     /*
     * Creates the initial belief for the problem. 
     * args:
@@ -247,7 +247,7 @@ double TagNikhil::GetMaxReward() const {
     return TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE;
 }
 
-ScenarioUpperBound* TagNikhil::CreateScenarioUpperBound(std::string name = "DEFAULT", std::string particle_bound_name = "DEFAULT") const{
+ScenarioUpperBound* TagNikhil::CreateScenarioUpperBound(std::string name, std::string particle_bound_name) const{
     /*
     * Create the Upper Bound for the TagNikhil class. 
     */ 
@@ -271,7 +271,7 @@ ValuedAction TagNikhil::GetBestAction() const {
 
 }
 
-ScenarioLowerBound* TagNikhil::CreateScenarioLowerBound(string name = "DEFAULT", string particle_bound_name = "DEFAULT") const{
+ScenarioLowerBound* TagNikhil::CreateScenarioLowerBound(string name, string particle_bound_name) const{
     /*
     * Creates the lower bound for the TagNikhil class. 
     */ 
@@ -361,7 +361,7 @@ void TagNikhil::MostLikelyRobPosition(const vector<State*>& particles, int &retR
     retRobY = maxElement.y;
 }
 
-void TagNikhil::PrintState(const State& state, std::ostream& out = std::cout) const {
+void TagNikhil::PrintState(const State& state, std::ostream& out) const {
     /*
     * Prints the state using the states RenderState function to the outstream
     */ 
@@ -369,7 +369,7 @@ void TagNikhil::PrintState(const State& state, std::ostream& out = std::cout) co
     localState.RenderState(out);
 }
 
-void TagNikhil::PrintObs(const State& state, OBS_TYPE obs, std::ostream& out = std::cout) const {
+void TagNikhil::PrintObs(const State& state, OBS_TYPE obs, std::ostream& out) const {
     /*
     * Print what the observation that is seen from the state means to the out stream. 
     */ 
@@ -383,7 +383,7 @@ void TagNikhil::PrintObs(const State& state, OBS_TYPE obs, std::ostream& out = s
     }
 }
 
-void TagNikhil::PrintAction(ACT_TYPE action, std::ostream& out = std::cout) const {
+void TagNikhil::PrintAction(ACT_TYPE action, std::ostream& out) const {
     /*
     * Print what the action means to the outstream.
     */  
@@ -402,7 +402,7 @@ void TagNikhil::PrintAction(ACT_TYPE action, std::ostream& out = std::cout) cons
     }
 }
 
-void TagNikhil::PrintBelief(const Belief& belief, std::ostream& out = std::cout) const {
+void TagNikhil::PrintBelief(const Belief& belief, std::ostream& out) const {
     /*
     * Print what the belief is to the outstream. 
     */ 
