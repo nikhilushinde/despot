@@ -20,6 +20,9 @@ namespace despot {
 
 class TagNikhil: public DSPOMDP { 
 // This class is based off of the DSPOMDP example classes in the examples/cpp_model folder. 
+friend class TagNikhilHistoryPolicy;
+friend class TagNikhilManhattanUpperBound;
+
 protected:
     mutable MemoryPool<TagStateNikhil> memory_pool_;
     std::vector <TagStateNikhil*> states_;

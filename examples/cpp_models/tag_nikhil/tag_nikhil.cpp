@@ -15,13 +15,13 @@ namespace despot {
 * ***********************************************************************************
 */
 
-class TagNikhil_HistoryPolicy: public DefaultPolicy {
+class TagNikhilHistoryPolicy: public DefaultPolicy {
 // This is a history based rollout policy to get the lower bounds for TagNikhil in DESPOT
 private:
     const TagNikhil *m_TagNikhil; // a copy of the TagNikhil class to access its functions and the environment attributes
 
 public: 
-    TagNikhil_HistoryPolicy(const DSPOMDP* model, ParticleLowerBound* bound):
+    TagNikhilHistoryPolicy(const DSPOMDP* model, ParticleLowerBound* bound):
     DefaultPolicy(model, bound){
         /*
         * Constructor to initialize the TagNikhil History based default policy. 
@@ -248,7 +248,15 @@ double TagNikhil::GetMaxReward() const {
 }
 
 ValuedAction TagNikhil::GetBestAction() const {
-    // TODO: FINISH THIS FUNCTION. 
+    /*
+    * This function returns the best action to be taken given nothing. This action is used to calculate the 
+    * trivial lower bound after the number of random number in the stream expires. 
+    */ 
+
+    // NOTE: this is currently just copied from the GetBestAction function that is provided in "base_tag.h"
+    return ValuedAction(NORTH, TAG_REWARD_MOVEMENT_TAG_NIKHIL_STATE); 
+    // the function in the DESPOT code returns (0, -1) 0 is NORTH in "coord.h" that has the enum to define the actions
+
 }
 
 /*
