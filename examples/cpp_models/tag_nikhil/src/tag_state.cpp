@@ -358,6 +358,7 @@ int TagStateNikhil::randomNumToInt(float actionProbs[], int actionProbsSize, flo
         if (randomNum <= trackedProb) {
             // this is the index to return 
             ret_action_index = action_num;
+            return ret_action_index;
         }
     }
 
@@ -380,6 +381,7 @@ void TagStateNikhil::oppStep(float randomNum) {
     oppPolicyDistribution(oppActionProbs.data());
 
     // deterministically select opponent action to use. 
+    // NOTE: for the opponent the TAG action means to stay put
     int oppActionIndex = this->randomNumToInt(oppActionProbs.data(), NUM_ACTIONS_TAG_NIKHIL_STATE, randomNum);
     ACT_TYPE oppAction = this->allActions[oppActionIndex];
 
