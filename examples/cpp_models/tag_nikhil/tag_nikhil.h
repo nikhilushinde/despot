@@ -80,13 +80,13 @@ public:
     /* ======= Display Functions: ========*/
     /* These functions are not needed for performance but are used for debugging and displaying */
     /* Prints a state. */
-    virtual void PrintState(const State& state, std::ostream& out = std::cout) const = 0;
+    void PrintState(const State& state, std::ostream& out = std::cout) const;
     /*  Prints an observation. */
-    virtual void PrintObs(const State& state, OBS_TYPE obs, std::ostream& out = std::cout) const = 0;
+    void PrintObs(const State& state, OBS_TYPE obs, std::ostream& out = std::cout) const;
     /* Prints an action. */
-    virtual void PrintAction(ACT_TYPE action, std::ostream& out = std::cout) const = 0;
+    void PrintAction(ACT_TYPE action, std::ostream& out = std::cout) const;
     /* Prints a belief. */
-    virtual void PrintBelief(const Belief& belief, std::ostream& out = std::cout) const = 0;
+    void PrintBelief(const Belief& belief, std::ostream& out = std::cout) const;
 
 private:
 
