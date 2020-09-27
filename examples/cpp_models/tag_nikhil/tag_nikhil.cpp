@@ -11,7 +11,7 @@ namespace despot {
 
 /*
 * ***********************************************************************************
-* Tag Default Policy class: to get a lower bound in  DESPOT. 
+* Tag Default Policy class: to get a LOWER BOUND in  DESPOT. 
 * ***********************************************************************************
 */
 
@@ -76,6 +76,61 @@ public:
         // return a random feasible action
         int ret_feasible_action_index = Random::RANDOM.NextInt(feasible_actions.size());
         return feasible_actions[ret_feasible_action_index];
+    }
+};
+
+/*
+* ***********************************************************************************
+* Manhattan distance based UPPER bound class
+* ***********************************************************************************
+*/
+
+class TagNikhilManhattanUpperBound: public ParticleUpperBound, public BeliefUpperBound {
+protected: 
+    const TagNikhil *m_TagNikhil; // copy of tag nikhil to have to reference its attributes
+public: 
+    TagNikhilManhattanUpperBound(const TagNikhil *model): m_TagNikhil(model) {
+        /*
+        * Constructor for the manhattan distance based upper bound class
+        */ 
+    }
+
+    double ManhattanDistanceCalc(tagStateStruct environmentState) const{
+        /*
+        * Utility function that is used to find the manhattan distance between the robot and 
+        * the opponent in the specified environment state. 
+        */
+        return (abs(environmentState.robX - environmentState.oppX) + abs(environmentState.robY - environmentState.oppY));
+    }
+
+    using ParticleUpperBound::Value;
+    double Value(const State &s) {
+        const TagStateNikhil& state = static_cast<const TagStateNikhil&>(s);
+        double dist = ManhattanDistanceCalc(state.get_envState());
+        double discountedValue = -(1 - Globals::Discount(dist)) / (1 - Globals::Discount())
+				+ TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE * Globals::Discount(dist);
+        return discountedValue;
+    }
+
+    using BeliefUpperBound::Value;
+    double Value(const Belief* belief) const {
+        const vector<State*>& particles = static_cast<const ParticleBelief*>(belief)->particles();
+        double totalValue = 0;
+
+        State *particle;
+        const TagStateNikhil *state;
+        tagStateStruct environmentState;
+        double dist, discountedValue;
+        for (int i = 0; i < particles.size(); i++) {
+            particle = particles[i];
+            state = static_cast<const TagStateNikhil*>(particle);
+            environmentState = state->get_envState();
+            dist = ManhattanDistanceCalc(environmentState);
+            discountedValue = -(1 - Globals::Discount(dist)) / (1 - Globals::Discount())
+				+ TAG_REWARD_SUCCESS_TAG_NIKHIL_STATE * Globals::Discount(dist);
+            totalValue += state->weight * discountedValue;
+        }
+        return totalValue;
     }
 };
 
