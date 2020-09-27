@@ -209,6 +209,7 @@ State* TagNikhil::CreateStartState(std::string type) const{
     * returns:
     *   - pointer of type state to the random state object that was created in dynamic memory
     */ 
+    cout << "IN CREATE START STATE FOR TAGNIKHIL" << endl;
     return new TagStateNikhil();
 }
 
@@ -224,8 +225,12 @@ Belief* TagNikhil::InitialBelief(const State* start, std::string type) const {
     // only support "DEFAULT" and "PARTICLE" belief types - uniform belief over all the positions
     if (type == "DEFAULT" || type == "PARTICLE") {
         vector <State*> particles;
-        double uniform_particle_weight = (1/(NUM_XY_POS_TAG_NIKHIL_STATE * NUM_XY_POS_TAG_NIKHIL_STATE));
+        double total_num_states = pow(NUM_XY_POS_TAG_NIKHIL_STATE, 2);
+        double uniform_particle_weight = 1.0/total_num_states;
+        cout << "Num xy states possible is: " << NUM_XY_POS_TAG_NIKHIL_STATE << endl;
+        cout << "The uniform particle weight is: " << uniform_particle_weight << endl;
         TagStateNikhil *new_particle_state;
+        cout << "IN INITIAL BELIEF FOR TAGNIKHIL" << endl;
         for (int rob_num = 0; rob_num < NUM_XY_POS_TAG_NIKHIL_STATE; rob_num++) {
             for (int opp_num = 0; opp_num < NUM_XY_POS_TAG_NIKHIL_STATE; opp_num++) {
                 new_particle_state = static_cast<TagStateNikhil *>(Allocate(-1, uniform_particle_weight));
@@ -308,9 +313,6 @@ State* TagNikhil::Copy(const State* particle) const {
     * Creates a copy of the state whose pointer is input
     */ 
     // TODO: FINISH COPY CONSTRUCTOR FOR TagStateNikhil class before you can use this function
-    cerr << " TODO: HAVE NOT COMPLETED THE COPY CONSTRUCTOR FOR TagStateNikhil " << endl;
-	exit(1);
-
     TagStateNikhil* state_ptr = memory_pool_.Allocate();
     *state_ptr = *static_cast<const TagStateNikhil*>(particle);
     state_ptr->SetAllocated();

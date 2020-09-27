@@ -71,6 +71,8 @@ public:
     TagStateNikhil(); // no args constructor
     TagStateNikhil(int robPosIntIndex, int oppPosIntIndex); // constructor where you specify a number from 0 to 29 exclusive for the robot and opponent position
     TagStateNikhil(int robX, int robY, int oppX, int oppY); // constructor where you specify the robot and opp positions
+
+    TagStateNikhil(const TagStateNikhil &stateToCopy); // copy constructor for TagStateNikhil
     
     void IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, int &retRobY, int &retOppX, int &retOppY); // 
     void InitState(int robX, int robY, int oppX, int oppY); // initialize the state of the environment with the robot and opponent positions

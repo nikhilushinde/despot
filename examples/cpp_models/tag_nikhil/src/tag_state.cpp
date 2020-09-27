@@ -43,6 +43,15 @@ TagStateNikhil::TagStateNikhil(int robX, int robY, int oppX, int oppY) {
     this->InitState(robX, robY, oppX, oppY);
 }
 
+TagStateNikhil::TagStateNikhil(const TagStateNikhil &stateToCopy) {
+    /*
+    * Copy constructor for TagStateNikhil. Initializes an object to be a copy in terms of all attributes
+    * of the stateToCopy
+    */ 
+    tagStateStruct envStateToCopy = stateToCopy.get_envState();
+    this->InitState(envStateToCopy.robX, envStateToCopy.robY, envStateToCopy.oppX, envStateToCopy.oppY);
+}
+
 void TagStateNikhil::IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, int &retRobY, int &retOppX, int &retOppY) {
     /*
     * Converts the robPosInt and the oppPosInt to (x,y) positions for the robot and the opponent
@@ -84,6 +93,7 @@ void TagStateNikhil::IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, 
     retRobY = y_positions[robPosInt];
     retOppX = x_positions[oppPosInt];
     retOppY = y_positions[oppPosInt];
+    
 }
 
 void TagStateNikhil::InitStateFromInts(int robPosInt, int oppPosInt) {
@@ -172,8 +182,8 @@ void TagStateNikhil::RenderState(ostream &out) const{
         - 0: represents a blank space in the environment 
         - x: non occupiable space in the environment 
     */
-    for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
-        for (int y = 0; y < HEIGHT_TAG_NIKHIL_STATE; y++) {
+    for (int y = HEIGHT_TAG_NIKHIL_STATE - 1; y >= 0; y--) {
+        for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
             if (x == envState.robX && y == envState.robY && x == envState.oppX && y == envState.oppY) {
                 out << "Q";
             } else if (x == envState.robX && y == envState.robY) {
@@ -229,8 +239,6 @@ bool TagStateNikhil::robStep(ACT_TYPE act, double &reward) {
     * Returns:
     *   - boolean value that determines if the game of tag has ended - true if ended else false
     */
-
-    cout << "CALLED ROBSTEP" << endl;
     tagStateStruct tempState;
     if (act == TAG) {
         // tag the robot 
@@ -407,8 +415,8 @@ void TagStateNikhil::oppStep(float randomNum) {
             this->envState = tempState;
         }
     } 
+    /*
     // NOTE: the TAG action means to stay stationary for the opponent so we do nothing
-
     // TODO: REMOVE FOR DEBUGGING PRINTING WHICH ACTION WAS TAKEN
     if (oppAction == NORTH) {
         cout << "opp took action: NORTH" << endl << endl;
@@ -421,6 +429,7 @@ void TagStateNikhil::oppStep(float randomNum) {
     } else if (oppAction == TAG) {
         cout << "opp took action: STATIONARY" << endl << endl;
     }
+    */
 }
 
 void TagStateNikhil::oppStepRandom() {
@@ -475,8 +484,8 @@ void TagStateNikhil::oppStepRandom() {
             this->envState = tempState;
         }
     } 
+    /*
     // NOTE: the TAG action means to stay stationary for the opponent so we do nothing
-
     // TODO: REMOVE FOR DEBUGGING PRINTING WHICH ACTION WAS TAKEN
     if (oppAction == NORTH) {
         cout << "opp took action: NORTH" << endl << endl;
@@ -489,6 +498,7 @@ void TagStateNikhil::oppStepRandom() {
     } else if (oppAction == TAG) {
         cout << "opp took action: STATIONARY" << endl << endl;
     }
+    */
 }
 
 OBS_TYPE TagStateNikhil::observe() {
@@ -553,7 +563,6 @@ bool TagStateNikhil::Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYP
     *   - bool: true if the game has ended and the opponent is tagged, else false 
     */    
     bool gameOver = false;
-
     // FIRST: tag
     if (act == TAG) {
         gameOver = robStep(act, reward);
