@@ -32,12 +32,32 @@ struct tagStateStruct {
     int robY;
     int oppX;
     int oppY;
+
+    // override the equal operator
+    bool operator==(const tagStateStruct &o) const{ 
+        return ((robX == o.robX) && (robY == o.robY) && (oppX == o.oppX) && (oppY == o.oppY));
+    }
+
+    // override the compare operator
+    bool operator<(const tagStateStruct &o) {
+        return ((robX > o.robX) || (robX == o.robX && robY > o.robY) || ((robX == o.robX && robY == o.robY) && ((oppX > o.oppX) || (oppX == o.oppX && oppY > o.oppY))) );
+    }
 };
 
 // structure to hold one position in the environment
 struct tagCoordsStruct {
     int x;
     int y;
+
+    // override the equal operator
+    bool operator==(const tagCoordsStruct &o) const {
+        return (x == o.x && y == o.y);
+    }
+
+    // override the compare operator
+    bool operator<(const tagCoordsStruct &o) const {
+        return ((x > o.x) || (x == o.x && y > o.y));
+    }
 };
 
 struct OutOfBoundsException : public std::exception {
@@ -57,7 +77,7 @@ public:
     void InitStateFromInts(int robPosInt, int oppPosInt); // Initialize the state of the environment from integers that specify the robot and opponent positions
     
     void Render(); // print the environment out to terminal
-    void RenderState(ostream& out) const; // prints the environment out to the ostream - required for the PrintState function in DESPOT
+    void RenderState(std::ostream& out) const; // prints the environment out to the ostream - required for the PrintState function in DESPOT
 
     bool Step(ACT_TYPE act, float randomNum, double &reward, OBS_TYPE &observation); //steps in the environment and returns reward and observation - mutates the environment state
     bool robStep(ACT_TYPE act, double &reward); // steps the robot in the environment with action sees reward

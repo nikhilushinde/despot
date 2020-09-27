@@ -10,7 +10,7 @@ TagStateNikhil::TagStateNikhil() {
     * Constructor for the tag environment - initializes the robot and opponent to a random position in the environment
     */
     int robPosRandInt, oppPosRandInt;
-    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE;
+    robPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
     oppPosRandInt = Random::RANDOM.NextInt(NUM_XY_POS_TAG_NIKHIL_STATE);
 
     this->InitStateFromInts(robPosRandInt, oppPosRandInt);
@@ -69,14 +69,17 @@ void TagStateNikhil::IntToPosCoords(int robPosInt, int oppPosInt, int &retRobX, 
             if (x >= 5 && x <= 7) {
                 x_positions[count] = x;
                 y_positions[count] = y;
+                count ++;
             } else {
                 if (y <= 1) {
                     x_positions[count] = x;
                     y_positions[count] = y;
+                    count ++;
                 }
             }
         }
     }
+
     retRobX = x_positions[robPosInt];
     retRobY = y_positions[robPosInt];
     retOppX = x_positions[oppPosInt];
@@ -115,6 +118,7 @@ void TagStateNikhil::InitState(int robX, int robY, int oppX, int oppY) {
     // check validity of the positions
     bool isInEnvironment = inEnv(this->envState);
     if (!isInEnvironment) {
+        std::cout << "robot x: " << robX << ", robot Y:" << robY << ", opponent X:" << oppX << ", opponent Y:" << oppY << endl;
         throw OutOfBoundsException();
     }
 
@@ -169,7 +173,7 @@ void TagStateNikhil::RenderState(ostream &out) const{
         - x: non occupiable space in the environment 
     */
     for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
-        for (int y = 0; y < LENGTH_TAG_NIKHIL_STATE; y++) {
+        for (int y = 0; y < HEIGHT_TAG_NIKHIL_STATE; y++) {
             if (x == envState.robX && y == envState.robY && x == envState.oppX && y == envState.oppY) {
                 out << "Q";
             } else if (x == envState.robX && y == envState.robY) {
@@ -525,6 +529,9 @@ double TagStateNikhil::ObsProb(OBS_TYPE obs, ACT_TYPE action) const{
         } else {
             return 1.0; // only observe 0 if the robot and the opponent are not on the same spot
         }
+    } else {
+        cerr << "Error: OBSERVATION:" << obs << "Is not a valid observation for the TagStateNikhil class" << endl;
+        exit(1);
     }
 }
 
@@ -598,6 +605,9 @@ ACT_TYPE TagStateNikhil::getOppositeAction(ACT_TYPE action) const {
         return SOUTH;
     } else if (action == SOUTH) {
         return NORTH;
+    } else {
+        cerr << "Error: Action " << action << " is not a valid action for TagStateNikhil class" << endl;
+        exit(1);
     }
 }
 
