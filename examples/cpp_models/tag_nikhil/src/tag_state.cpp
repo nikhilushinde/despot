@@ -417,21 +417,7 @@ void TagStateNikhil::oppStep(float randomNum) {
             this->envState = tempState;
         }
     } 
-    /*
-    // NOTE: the TAG action means to stay stationary for the opponent so we do nothing
-    // TODO: REMOVE FOR DEBUGGING PRINTING WHICH ACTION WAS TAKEN
-    if (oppAction == NORTH) {
-        cout << "opp took action: NORTH" << endl << endl;
-    } else if (oppAction == SOUTH) {
-        cout << "opp took action: SOUTH" << endl << endl;
-    } else if (oppAction == EAST) {
-        cout << "opp took action: EAST" << endl << endl;
-    } else if (oppAction == WEST) {
-        cout << "opp took action: WEST" << endl << endl;
-    } else if (oppAction == TAG) {
-        cout << "opp took action: STATIONARY" << endl << endl;
-    }
-    */
+
 }
 
 void TagStateNikhil::oppStepRandom() {
@@ -486,21 +472,6 @@ void TagStateNikhil::oppStepRandom() {
             this->envState = tempState;
         }
     } 
-    /*
-    // NOTE: the TAG action means to stay stationary for the opponent so we do nothing
-    // TODO: REMOVE FOR DEBUGGING PRINTING WHICH ACTION WAS TAKEN
-    if (oppAction == NORTH) {
-        cout << "opp took action: NORTH" << endl << endl;
-    } else if (oppAction == SOUTH) {
-        cout << "opp took action: SOUTH" << endl << endl;
-    } else if (oppAction == EAST) {
-        cout << "opp took action: EAST" << endl << endl;
-    } else if (oppAction == WEST) {
-        cout << "opp took action: WEST" << endl << endl;
-    } else if (oppAction == TAG) {
-        cout << "opp took action: STATIONARY" << endl << endl;
-    }
-    */
 }
 
 OBS_TYPE TagStateNikhil::observe() {
