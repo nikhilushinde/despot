@@ -317,7 +317,7 @@ void TagStateNikhil::oppPolicyDistribution(float retOppActionProbs[]) {
         // moving either east or west moves further from the robot
         oppActionProbs[EAST] = 0.2;
         oppActionProbs[WEST] = 0.2;
-    } else if (this->envState.robX > this->envState.oppY) {
+    } else if (this->envState.robX > this->envState.oppX) {
         // robot is east you want to move further west
         oppActionProbs[WEST] = 0.4;
     } else {
@@ -328,10 +328,16 @@ void TagStateNikhil::oppPolicyDistribution(float retOppActionProbs[]) {
     // set the stationary probability - TAG is the stationary action for the opponent 
     oppActionProbs[TAG] = 0.2;
 
+    //cout << "In OppProbDistrib: current robot state: " << envState.robX << "," << envState.robY << " and current opponent state: " << envState.oppX << "," << envState.oppY << endl;
+    //cout << "Opponent probability distribution is: ";
     // populate the array to return with the correct probabilities
     for (int i = 0; i < (int) oppActionProbs.size(); i++) {
         retOppActionProbs[i] = oppActionProbs[i];
+        // TODO: REMOVE FOR DEBUG
+        cout << oppActionProbs[i] << ", ";
     }
+    cout << endl;
+
 }
 
 int TagStateNikhil::randomNumToInt(float actionProbs[], int actionProbsSize, float randomNum) {
