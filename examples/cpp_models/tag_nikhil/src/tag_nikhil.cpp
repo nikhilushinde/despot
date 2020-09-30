@@ -30,6 +30,7 @@ public:
         *   - bound: a particle lower bound to use after the finite random number stream that is 
         *            used for this default policy runs out. 
         */
+        cout << "CREATING THE HISTORY BASED DEFAULT POLICY FOR THE LOWER BOUND" << endl << endl;
         m_TagNikhil = (static_cast<const TagNikhil*>(model));
     }
 
@@ -54,7 +55,7 @@ public:
 
         // If the last observation saw the opponent then Tag immediately 
         OBS_TYPE saw_opponent = 1;
-        if (history.LastObservation() == saw_opponent) {
+        if (static_cast<int>(history.LastObservation()%10) == saw_opponent) {
             return m_TagNikhil->TAG;
         }
 
@@ -93,6 +94,7 @@ public:
         /*
         * Constructor for the manhattan distance based upper bound class
         */ 
+        cout << "Creating the MANHATTAN UPPER BOUND" << endl << endl;
     }
 
     double ManhattanDistanceCalc(tagStateStruct environmentState) const{
@@ -283,7 +285,7 @@ ScenarioLowerBound* TagNikhil::CreateScenarioLowerBound(string name, string part
     const DSPOMDP *model = this;
     if (name == "TRIVIAL" || name == "DEFAULT" || name == "SHR") {
         // Use the smart history based default rollout policy to create the lower bound
-        return new RandomPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
+        return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
     } else {
         cerr << "Specified Lower Bound " << name << " is NOT SUPPORTED!";

@@ -58,7 +58,9 @@ int main(int argc, char * argv[]) {
         } else if (act == tagEnv.TAG) {
             cout << "act: STATIONARY" << endl << endl;
         }
+
         cout << "Total Reward: " << totalReward << endl;
+        cout << "robot state: " << tagEnv.get_envState().robX << "," << tagEnv.get_envState().robY << endl;
         cout << "Observation: " << observation << endl;
         cout << "Step: " << count << endl;
         count ++;

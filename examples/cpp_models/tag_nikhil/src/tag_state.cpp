@@ -334,10 +334,8 @@ void TagStateNikhil::oppPolicyDistribution(float retOppActionProbs[]) {
     for (int i = 0; i < (int) oppActionProbs.size(); i++) {
         retOppActionProbs[i] = oppActionProbs[i];
         // TODO: REMOVE FOR DEBUG
-        cout << oppActionProbs[i] << ", ";
+        //cout << oppActionProbs[i] << ", ";
     }
-    cout << endl;
-
 }
 
 int TagStateNikhil::randomNumToInt(float actionProbs[], int actionProbsSize, float randomNum) {
@@ -482,17 +480,23 @@ void TagStateNikhil::oppStepRandom() {
 
 OBS_TYPE TagStateNikhil::observe() {
     /*
-    * Returns a OBS_TYPE observation - just an integer
+    * Returns a OBS_TYPE observation - just an integer - accounts for both the position 
+    * of the robot and whether or not the robot sees the opponent
     * returns:
-    *   - observation - 1: if the robot and opponent are in the same position 
-    *                 - 0: otherwise
+    *   - observation: 3 digit number - robY*100 + robX*10 + last_digit
+    *       - last digit:
+    *           - 1: if the robot and opponent are in the same position 
+    *           - 0: otherwise
     * */
 
+    double observation = 0;
+    observation += envState.robY*100 + envState.robX*10;
     if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
-        return 1; 
+        observation += 1;
     } else {
-        return 0;
+        observation += 0;
     }
+    return observation;
 }
 
 double TagStateNikhil::ObsProb(OBS_TYPE obs, ACT_TYPE action) const{
@@ -506,21 +510,35 @@ double TagStateNikhil::ObsProb(OBS_TYPE obs, ACT_TYPE action) const{
     * returns:
     *   - double: representing the probability of seeing the given obs from the current state gotten to by action a
     */ 
-    if (obs == 1) {
-        if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
-            return 1.0; // can only observe 1 when the robot and the opponet are on the same spot
+    int observed_yx, true_yx, obs_opp; 
+    // obs_opp is 1 if the robot sees the opponent and 0 if not
+    // observed_yx is the y*10 + x
+    observed_yx = static_cast<int>(obs/10);
+    true_yx = envState.robY*10 + envState.robX;
+    obs_opp = static_cast<int>(obs%10);
+
+    if (observed_yx != true_yx) {
+        // robot position should be known so must match observation
+        return 0.0;
+    }
+
+    else {
+        if (obs_opp == 1) {
+            if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
+                return 1.0; // can only observe 1 when the robot and the opponet are on the same spot
+            } else {
+                return 0.0; // cannot observe 1 if the robot and the opponent are not on the same spot
+            }
+        } else if (obs_opp == 0) {
+            if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
+                return 0.0; // can only observe 1 when the robot and the oppoonent are in the ssame spot
+            } else {
+                return 1.0; // only observe 0 if the robot and the opponent are not on the same spot
+            }
         } else {
-            return 0.0; // cannot observe 1 if the robot and the opponent are not on the same spot
+            cerr << "Error: OBSERVATION:" << obs << "Is not a valid observation for the TagStateNikhil class" << endl;
+            exit(1);
         }
-    } else if (obs == 0) {
-        if (this->envState.robX == this->envState.oppX && this->envState.robY == this->envState.oppY) {
-            return 0.0; // can only observe 1 when the robot and the oppoonent are in the ssame spot
-        } else {
-            return 1.0; // only observe 0 if the robot and the opponent are not on the same spot
-        }
-    } else {
-        cerr << "Error: OBSERVATION:" << obs << "Is not a valid observation for the TagStateNikhil class" << endl;
-        exit(1);
     }
 }
 
