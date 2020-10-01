@@ -279,7 +279,6 @@ bool TagStateNikhil::robStep(ACT_TYPE act, double &reward) {
             this->envState = tempState;
         }
     }
-
     // set the reward and return that the game has not ended
     reward = movementReward;
     return false;
