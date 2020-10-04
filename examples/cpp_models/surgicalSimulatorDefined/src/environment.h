@@ -80,7 +80,9 @@ public:
     void state_rollback(); // rollback the state of the environment - rollback each obstacle and the robot
     bool reset(); // reset the positions of things in the environment
 
-    void printState(); // print the state of the environment
+    // state checking functions
+    bool at_goal() const; // checks if the environment is in a goal state
+    void printState() const; // print the state of the environment
 
 
     // variable attributes 

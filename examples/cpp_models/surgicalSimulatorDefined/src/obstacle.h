@@ -46,11 +46,11 @@ public:
     bool get_debug() const;
 
     // other functions
-    float deformation_cost(); // calculates the deformation cost of the last time step
-    environmentCoords single_arm_deformed_center(robot_arm arm, deflectionDirection deflection_direction, bool &error); // calculates the deflected center of the obstacle given a robot arm and the deflection direction
-    environmentCoords single_arm_stuck_center(robot_arm arm, deflectionDirection deflection_direction); // finds the center of the obstacle assuming that the obstacle is stuck to the robot arm 
+    float deformation_cost() const; // calculates the deformation cost of the last time step
+    environmentCoords single_arm_deformed_center(robot_arm arm, deflectionDirection deflection_direction, bool &error) const; // calculates the deflected center of the obstacle given a robot arm and the deflection direction
+    environmentCoords single_arm_stuck_center(robot_arm arm, deflectionDirection deflection_direction) const; // finds the center of the obstacle assuming that the obstacle is stuck to the robot arm 
     bool is_collision(robot_arm arm, deflectionDirection deflection_direction, environmentCoords obs_center); // check if arm collides with the obstacle with the given center value
-    void printState(); // function to print the state of the obstacle
+    void printState() const; // function to print the state of the obstacle
 
     // mutating functions
     void step_to_deformed_center(const robot_arm arms[], bool &error, float &cost); // function that steps the obstacles to the next position given the arms in the environment, returns if there was an error and the cost by pass by reference

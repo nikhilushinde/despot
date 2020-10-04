@@ -44,7 +44,7 @@ public:
     void step(robotArmActions action, int xy_step_size, int theta_deg_step_size, bool &is_out_of_bounds, float &cost);
     void state_rollback(); // rolls back the robot_arm's coords to the old_coords. 
 
-    void printState(); // prints the entire state of the robot_arm 
+    void printState() const; // prints the entire state of the robot_arm 
 
 
 private:

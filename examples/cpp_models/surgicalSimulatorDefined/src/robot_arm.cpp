@@ -307,7 +307,7 @@ void robot_arm::state_rollback() {
 ****************************************************************************************
 */
 // miscellaneous helper functions
-void robot_arm::printState() {
+void robot_arm::printState() const {
     /*
     * This function prints the entire state of the robot arm 
     */

@@ -44,7 +44,7 @@ public:
     void step(const robotArmActions actions[], int xy_step_size, int theta_deg_step_size, bool &error, float &cost); //step the robot (the robot_arms) in the environment and use pass by reference to return error and cost 
     void state_rollback(); // rolls back the state of the robot - rolls back all the robot_arms
 
-    void printState(); // print the state
+    void printState() const; // print the state
 
     robot_arm arms_m[NUM_ROBOT_ARMS_g]; // list of robot arm objects
 private:

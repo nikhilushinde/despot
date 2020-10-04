@@ -533,7 +533,24 @@ bool environment::reset() {
     return error;
 }
 
-void environment::printState() {
+bool environment::at_goal() const{
+    /*
+    * NOTE: Change thsi function according to objective
+    * Checks if the environment is in a goal/terminal state - this one just checks if one of the arms is in the goal region
+    * returns:
+    *   - true if the environment is in a goal state else false
+    */
+    float dist_to_goal;
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+        dist_to_goal = sqrt(pow(robObj_m.arms_m[arm_num].get_x() - goal_coord_m.x, 2) + pow(robObj_m.arms_m[arm_num].get_y() - goal_coord_m.y, 2));
+        if (dist_to_goal <= goal_radius_m) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void environment::printState() const{
     /*
     * Print the state of the environment - all the robot arms and all the obstacles
     */ 

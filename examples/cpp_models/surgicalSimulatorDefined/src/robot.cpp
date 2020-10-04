@@ -446,7 +446,7 @@ void robot::state_rollback() {
     }   
 }
 
-void robot::printState() {
+void robot::printState() const{
     /* Prints the state of the robot arm */
     cout << "Robot Environment height: " << ENV_HEIGHT_g << ", Robot environment length: " << ENV_LENGTH_g << endl;
     for (int i = 0; i < NUM_ROBOT_ARMS_g; i ++) {

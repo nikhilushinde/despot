@@ -338,7 +338,7 @@ bool obstacle::get_debug() const{
 * ********************************************************************************
 */
 
-float obstacle::deformation_cost() {
+float obstacle::deformation_cost() const{
     /* Cost to move from old_x, old_y to x,y using the spring energy model
     * Uses difference in potential energy of the spring to calculate cost. 
     *   NOTE: TODO: - change this to change the cost model. 
@@ -350,7 +350,7 @@ float obstacle::deformation_cost() {
     return stage_cost;
 }
 
-environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDirection deflection_direction) {
+environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDirection deflection_direction) const{
     /*
     * IMPORTANT NOTE: ALIAS FOR: single_arm_stuck_center
     * (self.deflection_directions MUST BE already set correctly for the new arm position 
@@ -461,7 +461,7 @@ environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDir
     return stuck_center;
 }
 
-environmentCoords obstacle::single_arm_deformed_center(robot_arm arm, deflectionDirection deflection_direction, bool &error) {
+environmentCoords obstacle::single_arm_deformed_center(robot_arm arm, deflectionDirection deflection_direction, bool &error) const{
     /*
     * Returns the proposed center of the obstacle if it were deformed by the given robot arm in the given deflection direction
     * Methodology:
@@ -528,7 +528,7 @@ bool obstacle::is_collision(robot_arm arm, deflectionDirection deflection_direct
     }
 }
 
-void obstacle::printState() {
+void obstacle::printState() const{
     /*
     * Function to print the state of the obstacle
     */ 
