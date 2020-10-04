@@ -3,6 +3,20 @@
 // Define the TAG class for the tag environment 
 using namespace std;
 
+// the things you are going to use from namespace cv
+using cv::Mat;
+using cv::Point;
+using cv::line;
+using cv::circle;
+using cv::Rect;
+using cv::rectangle;
+using cv::Scalar;
+using cv::namedWindow;
+using cv::WINDOW_AUTOSIZE;
+using cv::imshow;
+using cv::flip;
+using cv::waitKey;
+
 namespace despot {
 
 TagStateNikhil::TagStateNikhil() {
@@ -196,6 +210,85 @@ void TagStateNikhil::RenderState(ostream &out) const{
         }
         out << endl;
     }
+
+    // render the state using opencv
+    int unit_pixel_multiplier = 100;
+    int image_height = HEIGHT_TAG_NIKHIL_STATE * unit_pixel_multiplier;
+    int image_length = LENGTH_TAG_NIKHIL_STATE * unit_pixel_multiplier;
+    Mat image(image_height, image_length, CV_8UC3, Scalar(255, 255, 255));
+    Mat flippedImage(image_height, image_length, CV_8UC3, Scalar(255, 255, 255));
+
+    // draw all the grid lines that are used for tag
+    Point gridEndPt;
+    Point gridStartPt;
+    Scalar colorLine(0,0,0);
+    int thicknessLine = 2;
+    for (int i = 0; i < LENGTH_TAG_NIKHIL_STATE + 1; i++) {
+        gridEndPt = Point(i*unit_pixel_multiplier, 0);
+        gridStartPt = Point(i*unit_pixel_multiplier, HEIGHT_TAG_NIKHIL_STATE * unit_pixel_multiplier);
+        line(image, gridStartPt, gridEndPt, colorLine, thicknessLine);
+    }
+
+    for (int i = 0; i < HEIGHT_TAG_NIKHIL_STATE + 1; i++) {
+        gridEndPt = Point(0, i*unit_pixel_multiplier);
+        gridStartPt = Point(LENGTH_TAG_NIKHIL_STATE * unit_pixel_multiplier, i*unit_pixel_multiplier);
+        line(image, gridStartPt, gridEndPt, colorLine, thicknessLine);
+    }
+
+    // draw the opponent 
+    Scalar opponentColor(255, 0, 0);
+    Scalar robotColor(0,0,0);
+    Point robotPoint;
+    Point opponentPoint;
+
+    int robotXOffset = (int)unit_pixel_multiplier/2;
+    int robotYOffset = (int)unit_pixel_multiplier/2;
+
+    int oppXOffset = (int)unit_pixel_multiplier/2;
+    int oppYOffset = (int)unit_pixel_multiplier/2;
+
+    int robotRadius = 50;
+    int opponentRadius = 30;
+
+    Point startBox;
+    Point endBox;
+    Rect rectangleToDraw;
+
+    // draw the robot as a large circle and the opponent as smaller circle - first draw the robot and then draw the circle
+    for (int y = 0; y < HEIGHT_TAG_NIKHIL_STATE; y++) {
+        for (int x = 0; x < LENGTH_TAG_NIKHIL_STATE; x++) {
+            if (x == envState.robX && y == envState.robY && x == envState.oppX && y == envState.oppY) {
+                robotPoint = Point(x*unit_pixel_multiplier + robotXOffset, y*unit_pixel_multiplier + robotYOffset);
+                circle(image, robotPoint, robotRadius, robotColor, -1);
+                opponentPoint = Point(x*unit_pixel_multiplier + oppXOffset, y*unit_pixel_multiplier + oppYOffset);
+                circle(image, opponentPoint, opponentRadius, opponentColor, -1);
+            } else if (x == envState.robX && y == envState.robY) {
+                robotPoint = Point(x*unit_pixel_multiplier + robotXOffset, y*unit_pixel_multiplier + robotYOffset);
+                circle(image, robotPoint, robotRadius, robotColor, -1);
+            } else if (x == envState.oppX && y == envState.oppY) {
+                opponentPoint = Point(x*unit_pixel_multiplier + oppXOffset, y*unit_pixel_multiplier + oppYOffset);
+                circle(image, opponentPoint, opponentRadius, opponentColor, -1);
+            } else if (this->map[y][x] == 'x') {
+                //Rect rectangleToDraw(x*unit_pixel_multiplier, y*unit_pixel_multiplier, (x+1)*unit_pixel_multiplier), (y+1)*unit_pixel_multiplier);
+                startBox = Point(x*unit_pixel_multiplier, y*unit_pixel_multiplier);
+                endBox = Point((x+1)*unit_pixel_multiplier, (y+1)*unit_pixel_multiplier);
+                rectangleToDraw = Rect(startBox, endBox);
+                //Rect rectangleToDraw(10, 10, 100, 100);
+                rectangle(image, rectangleToDraw, Scalar(0,0,0), -1);
+            }
+        }
+    }
+
+    // get the flipped image
+    int flipDirection = 0; // 0 - means flip vertically
+    flip(image, flippedImage, flipDirection);
+
+    // display the window
+    namedWindow("Tag Print State window", WINDOW_AUTOSIZE);
+    imshow("Tag Print State window", flippedImage);
+    waitKey(10);
+    cout << "JUST RENDERED THE STATE" << endl;
+
 }
 
 bool TagStateNikhil::inEnv(tagStateStruct state) const{

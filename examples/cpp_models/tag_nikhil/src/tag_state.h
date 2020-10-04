@@ -6,6 +6,9 @@
 #include <ctime> // use this to seed the random number generator 
 #include <chrono> // for the random seed as well 
 
+// for opencv
+#include <opencv2/opencv.hpp>
+
 #include <vector> 
 #include <array>
 #include <random>
