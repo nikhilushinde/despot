@@ -442,6 +442,17 @@ int TagStateNikhil::randomNumToInt(float actionProbs[], int actionProbsSize, flo
     * returns:
     *   - index of the action that should be taken
     */ 
+    // TODO: REMOVE THIS - TEST FOR DEBUGGING - SEED RANDOM GENERATOR WITH DETERMINISTIC SEED
+    unsigned int deterministic_seed_val = (unsigned) ((double)randomNum * (double)UINT_MAX); 
+    srand(deterministic_seed_val);
+    //cout << randomNum << endl;
+    //cout << "Deterministic seed val: " << deterministic_seed_val << endl;
+    //cout << "Deterministic seed val: " << (unsigned) ((double)randomNum * (double)UINT_MAX) << endl;
+    randomNum = (double)rand()/(double)RAND_MAX;
+    //cout << rand() << endl; 
+    //cout << "NEW RANDOM:" << randomNum << endl;
+    
+
     float trackedProb = 0;
     int ret_action_index = -1;
     for (int action_num = 0; action_num < actionProbsSize; action_num++) {
@@ -450,8 +461,8 @@ int TagStateNikhil::randomNumToInt(float actionProbs[], int actionProbsSize, flo
         } else {
             trackedProb += actionProbs[action_num];
         }
-
-        if (randomNum <= trackedProb) {
+        // ensure that an action with zero probability id not being selected
+        if (randomNum <= trackedProb && actionProbs[action_num] != 0) {
             // this is the index to return 
             ret_action_index = action_num;
             return ret_action_index;
