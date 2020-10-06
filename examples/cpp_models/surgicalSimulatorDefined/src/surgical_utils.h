@@ -12,6 +12,10 @@
 // include all the defined parameters and constants to set the simulator correctly 
 #include "defined_parameters.h"
 
+// the despot related includes
+#include <despot/interface/pomdp.h>
+#include <despot/core/mdp.h>
+
 namespace despot {
 
 // constants to use in other files - NOT USER SET

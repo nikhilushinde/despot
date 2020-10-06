@@ -4,14 +4,14 @@
 /*
 * Description: This file creates the class that acts like the interface between the environment class that describes the toy surgical environment
 * and the despot solver. 
-
-NOTE: This only supports 
+* NOTE: this file only handles class uncertainty. 
 */
 
 // the despot related includes
 #include <despot/interface/pomdp.h>
 #include <despot/core/mdp.h>
 #include "environment.h"
+
 
 namespace despot {
 
@@ -52,7 +52,7 @@ public:
     void Free(State* particle) const;
     int NumActiveParticles() const;
 
-    void MostLikelyRobPosition(const vector<State*>& particles, int &retRobX, int &retRobY) const; // get the most likely robot position from a set of particles
+    void MostLikelyRobPosition(const std::vector <State*>&particles, int &retRobX, int &retRobY) const; // get the most likely robot position from a set of particles
 
     /* END: REQUIRED FUNCTIONS FOR DESPOT */
     /* ======= Display Functions: ========*/
