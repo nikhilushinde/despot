@@ -1,10 +1,6 @@
 #ifndef DEFINED_PARAMETERS_H
 #define DEFINED_PARAMETERS_H
 
-// the despot related includes
-//#include <despot/interface/pomdp.h>
-//#include <despot/core/mdp.h>
-
 /* 
 DESCRIPTION: this file contains user defined parameters that set
 various parameters of the toy surgical simulator environment. 
@@ -104,12 +100,14 @@ static const float half_fov_deg_g = CAM_FOV_DEG_g/2.0;
 static const int cam_num_scan_angles_g = ((int)(half_fov_deg_g/CAM_ANGLE_RESOLUTION_DEG_g)*2) + 1;
 
 
+// reward related constants - only give the magnitude of the values here. 
+static const bool USE_CONSTANT_MOVEMENT_COST_g false; // defines if the cost of all actions is the same constant
+#define CONSTANT_MOVEMENT_COST_g 10 // defines the numerical cost of each action if they are to be constant
 // TODO: add the _g suffix to these global variables
-// reward related constants
-#define ROBOT_MOVEMENT_ERROR_COST 1000000000000 // constant cost to return if there was an error in the robot movement 
-#define MOVEMENT_ERROR 10000000000 // cost for taking an action that resulted in an out of bounds error or collision error 
+#define MOVEMENT_ERROR 10000000 // cost for taking an action that resulted in an out of bounds error or collision error 
+#define ROBOT_MOVEMENT_ERROR_COST MOVEMENT_ERROR  // constant cost to return if there was an error in the robot movement 
 static const float OBSTACLE_ERROR_COST = MOVEMENT_ERROR; //define constant cost for error in obstacle manipulation
-
+#define TERMINAL_REWARD 1000000000
 
 /*
 NOTE: WHAT ATTRIBUTES TO DELETE FROM OBJECTS AND REPLACE WITH THESE PARAMETERS

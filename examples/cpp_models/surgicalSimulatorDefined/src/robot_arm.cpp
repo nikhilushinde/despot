@@ -295,7 +295,12 @@ void robot_arm::step(robotArmActions action, int xy_step_size, int theta_deg_ste
         cost = MOVEMENT_ERROR;
         return;
     }
-    cost = sqrt(pow(coords_m.x - old_coords_m.x, 2) + pow(coords_m.y - old_coords_m.y, 2)) + abs(coords_m.theta_degrees - old_coords_m.theta_degrees); 
+    if (USE_CONSTANT_MOVEMENT_COST_g) {
+        cost = CONSTANT_MOVEMENT_COST_g;
+    } else {
+        cost = sqrt(pow(coords_m.x - old_coords_m.x, 2) + pow(coords_m.y - old_coords_m.y, 2)) + abs(coords_m.theta_degrees - old_coords_m.theta_degrees); 
+    }
+
 }
 
 void robot_arm::state_rollback() {
