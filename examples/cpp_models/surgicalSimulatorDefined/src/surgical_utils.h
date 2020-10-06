@@ -13,8 +13,8 @@
 #include "defined_parameters.h"
 
 // the despot related includes
-#include <despot/interface/pomdp.h>
-#include <despot/core/mdp.h>
+//#include <despot/interface/pomdp.h>
+//#include <despot/core/mdp.h>
 
 namespace despot {
 

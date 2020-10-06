@@ -14,8 +14,6 @@
 
 namespace despot {
 
-#define MOVEMENT_ERROR 10000000000 // cost for taking an action that resulted in an out of bounds error or collision error 
-
 class robot_arm {
 public:
     // constructors 

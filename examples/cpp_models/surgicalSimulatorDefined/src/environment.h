@@ -23,7 +23,10 @@ struct environmentState {
     obstacle obstacles[NUM_OBSTACLES_g];
 };
 
-class environment: public State {
+// TODO: REMOVE WHEN DONE TESTING:
+typedef uint64_t OBS_TYPE;
+
+class environment { //: public State {
 public:
     // constructor
     environment(); // default constructor of the environment

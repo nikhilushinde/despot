@@ -101,7 +101,7 @@ static const int cam_num_scan_angles_g = ((int)(half_fov_deg_g/CAM_ANGLE_RESOLUT
 
 
 // reward related constants - only give the magnitude of the values here. 
-static const bool USE_CONSTANT_MOVEMENT_COST_g false; // defines if the cost of all actions is the same constant
+static const bool USE_CONSTANT_MOVEMENT_COST_g = false; // defines if the cost of all actions is the same constant
 #define CONSTANT_MOVEMENT_COST_g 10 // defines the numerical cost of each action if they are to be constant
 // TODO: add the _g suffix to these global variables
 #define MOVEMENT_ERROR 10000000 // cost for taking an action that resulted in an out of bounds error or collision error 

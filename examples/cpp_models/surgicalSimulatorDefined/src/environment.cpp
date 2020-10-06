@@ -524,7 +524,7 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     return;
 }
 
-OBS_TYPE environment::class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const {
+uint64_t environment::class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const {
     /*
     * Convert the array of observed obstacle classes to an unsigned integer to be used by despot
     * Methodology: 
