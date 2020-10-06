@@ -492,27 +492,48 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
         if (class_observable_obstacles_m[obs_num]) {
             // create a probability distribution based on the observed classes based on the true obstacle class 
-            auto itr = find(all_obstacle_ks_g, all_obstacle_ks_g + NUM_OBS_K_CLASSES_g, obstacles_m[obs_num].get_k());
-            if (itr != end(all_obstacle_ks_g)) {
-                true_k_index = distance(all_obstacle_ks_g, itr);
+            auto itr = find(all_possible_obs_ks_g, all_possible_obs_ks_g + NUM_OBS_K_CLASSES_g, obstacles_m[obs_num].get_k());
+            if (itr != end(all_possible_obs_ks_g)) {
+                true_k_index = distance(all_possible_obs_ks_g, itr);
             } else {
                 cerr << "ERROR: IN observe_classes: the k value of the obstacle " << obs_num << " was not valid - not in permissible set of obstacle k values" << endl;
                 exit(1);
             }
             class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB;
             // TODO: REMOVE THIS!!!!
+            /*
             float total_prob = 0;
             accumulate(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, total_prob);
             if (total_prob != 1) {
+                cout << "Observable obstacles array: ";
+                for (int i = 0; i < NUM_OBSTACLES_g; i++) {
+                    cout << class_observable_obstacles_m[i] << ", ";
+                }
+                cout << endl;
+
+                cout << "True class probability: " << TRUE_CLASS_OBSERVATION_PROB << endl;
+                cout << "other class probaiblity: " << other_class_probability << endl;
+                cout << "True obstacle k: " << obstacles_m[obs_num].get_k() << endl;
+                cout << "true class index: " << true_k_index << endl;
+                cout << "The obstacle index is: " << obs_num << endl;
+                cout << "The probability array: ";
+                float total = 0;
+                for (int i = 0; i < NUM_OBS_K_CLASSES_g; i++) {
+                    cout << class_probability_distrib[i] << ", ";
+                    total += class_probability_distrib[i];
+                }
+                cout << endl;
+                cout << "total probability is: " << total << endl;
                 cout << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
                 cerr << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
                 exit(1);
             }
+            */
             // END: TODO: REMOVE THIS!!!!
 
             sampledRandomNum = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
             sampled_obs_k_index = randomNumToInt(class_probability_distrib, NUM_OBS_K_CLASSES_g, sampledRandomNum);
-            ret_observed_classes[obs_num] = sampled_obs_k_index;
+            ret_observed_classes[obs_num] = all_possible_obs_ks_g[sampled_obs_k_index];
             // reset the class_probability distribution for the next obstacle
             class_probability_distrib[true_k_index] = other_class_probability;
         } else {
@@ -524,7 +545,7 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     return;
 }
 
-uint64_t environment::class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const {
+OBS_TYPE environment::class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const {
     /*
     * Convert the array of observed obstacle classes to an unsigned integer to be used by despot
     * Methodology: 
@@ -556,9 +577,9 @@ uint64_t environment::class_observations_to_obstype(const float observed_obstacl
 
         if (observed_obstacle_classes[obs_num] != DEFAULT_NOTOBSERVED_OBS_K_g) {
             // create a probability distribution based on the observed classes based on the true obstacle class 
-            auto itr = find(all_obstacle_ks_g, all_obstacle_ks_g + NUM_OBS_K_CLASSES_g, obstacles_m[obs_num].get_k());
-            if (itr != end(all_obstacle_ks_g)) {
-                k_index = static_cast<OBS_TYPE>(distance(all_obstacle_ks_g, itr));
+            auto itr = find(all_possible_obs_ks_g, all_possible_obs_ks_g + NUM_OBS_K_CLASSES_g, observed_obstacle_classes[obs_num]);
+            if (itr != end(all_possible_obs_ks_g)) {
+                k_index = static_cast<OBS_TYPE>(distance(all_possible_obs_ks_g, itr));
             } else {
                 cerr << "ERROR: IN class_observations_to_obstype: the k value of the obstacle " 
                     << obs_num << " was not valid - not in permissible set of obstacle k values" << endl;

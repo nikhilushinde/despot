@@ -159,6 +159,21 @@ int main() {
         } else if (c == '1' || c == '2' || c == '3'){
             controlled_arm = (int) c - CHAR_TO_NUM_SUBTRACTOR - 1; // set index of arm to control
             cout << "Changed control to arm at index: " << controlled_arm << endl;
+        } else if (c == 'o') {
+            cout << "OBSERVING: " << endl;
+            float observed_classes[NUM_OBSTACLES_g];
+            double rand_num = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+            cout << "The random number was: " << rand_num << endl;
+            env.observe_classes(observed_classes, NUM_OBSTACLES_g, rand_num);
+            
+            cout << "Observed class index array: ";
+            for (int i = 0; i < NUM_OBSTACLES_g; i++) {
+                cout << observed_classes[i] << ", ";
+            }
+            cout << endl;
+            cout << "Observed class as OBS_TYPE:  " << env.class_observations_to_obstype(observed_classes, NUM_OBSTACLES_g) << endl; 
+            cout << endl;
+            continue;
         } else {
             cout << "INVALID ENTRY!!" << endl << endl << endl;
         }

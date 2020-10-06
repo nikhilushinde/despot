@@ -61,7 +61,7 @@ static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {10, 30, 1
 // used for obstacle initialization
 #define OBSTACLE_RADIUS_g 30 // define single obstacle radius for all the obstacles
 //static const int all_obstacle_radiuses_g[NUM_OBSTACLES_g] = {30, 30, 30}; // the radiuses of each obstacle
-static const float all_obstacle_ks_g[NUM_OBSTACLES_g] = {0.001, 10, 1000000}; // the k value of each obstacle
+static const float all_obstacle_ks_g[NUM_OBSTACLES_g] = {10000000, 10, 1000000}; // the k value of each obstacle
 static const float all_obstacle_center_x_g[NUM_OBSTACLES_g] = {31, 91, 151}; // the x value of each obstacle
 static const float all_obstacle_center_y_g[NUM_OBSTACLES_g] = {100, 30, 110}; // the initial y value of each obstacle
 
