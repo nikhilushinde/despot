@@ -69,6 +69,8 @@ public:
 
     void observe_points(cameraIntersectionPoint *ret_cam_intersection_points, int ret_array_size) const; // observes using the camera's scan_environment function and returns intersectoin points with the environment and the intersection types
     void observe_dists(cameraIntersectionDistance *ret_cam_intersection_dists, int ret_array_size) const; // observes using the camera's scan_environment_dists function and returns the intersection distances and types 
+    int randomNumToInt(const float probabilityDistrib[], int probabilityDistrib_size, float randomNum) const; // to convert a random number to an integer based on a discrete probability distribution 
+    void observe_classes(float *ret_observed_classes, int ret_array_size, double rand_num) const; //observes the classes of the obstacles that the robot just moved in the last round.  
     // other functions
 
     // set functions 
@@ -113,6 +115,7 @@ private:
     float obstacle_ks_m[NUM_OBSTACLES_g]; // list of the k value of each of the obstacles
     deflectionDirection init_deflection_directions_m[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g]; // the initial deflection directions used to initialize the obstacles
     obstacle obstacles_m[NUM_OBSTACLES_g]; // list of all the obstacle objects that are in the environment
+    bool class_observable_obstacles_m[NUM_OBSTACLES_g]; // boolean list where true indicates that the obstacle's class is observable due to interaction in the last time step. 
 
     bool debug_m; // the boolean debugging flag
     camera cam_m; // the camera object. 

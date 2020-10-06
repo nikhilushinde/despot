@@ -6,9 +6,17 @@
 */
 #include "environment.h"
 
+// TODO: REMOVE THIS
+#include <numeric>
+using std::accumulate;
+
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::find;
+using std::distance; 
+using std::end;
+using std::fill;
 using std::min;
 
 namespace despot {
@@ -39,12 +47,6 @@ environment::environment() {
         robot_arm_start_coords[arm_num].y = all_robot_y_g[arm_num];
         robot_arm_start_coords[arm_num].theta_degrees = all_robot_theta_deg_g[arm_num];
     }
-
-    // initialize the obstacle related lists for initialization
-    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
-        
-    }
-
 
     bool error = init_environment(ENV_HEIGHT_g, ENV_LENGTH_g, goal_coord, GOAL_RADIUS_g, XY_STEP_SIZE_g, THETA_DEG_STEP_SIZE_g, 
     NUM_ROBOT_ARMS_g, robot_arm_start_coords, OBSTACLE_LIMIT_FLAG_g, OBSTACLE_RADIUS_g, NUM_OBSTACLES_g, all_obstacle_ks_g, 
@@ -111,6 +113,8 @@ environment::environment(const environment &environment_to_copy) {
 
         // this uses the obstacle copy constructor implicitly 
         obstacles_m[obs_num] = environment_to_copy.obstacles_m[obs_num];
+
+        class_observable_obstacles_m[obs_num] = class_observable_obstacles_m[obs_num];
     }
     
     debug_m = environment_to_copy.debug_m;
@@ -244,6 +248,13 @@ bool environment::init_environment(int height, int length, environmentCoords goa
     robotArmCoords init_camera_coords = robObj_m.arms_m[cam_corresponding_arm_index].get_coords();
     cam_m.init_camera(init_camera_coords, 
                     cam_corresponding_arm_index, cam_fov_degrees, cam_angle_resolution_deg, cam_max_distance);
+
+
+    // no obstacle classes are observable as no obstacle interaction has occurred since the environment was just initialized
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
+        class_observable_obstacles_m[obs_num] = false;
+    }
+
     return error;
 }
 
@@ -404,6 +415,115 @@ void environment::observe_dists(cameraIntersectionDistance *ret_cam_intersection
     cam_m.scan_environment_distance(num_robot_arms_m, robObj_m.arms_m, num_obstacles_m, obstacles_m, ret_cam_intersection_dists, ret_array_size);
 }
 
+int environment::randomNumToInt(const float probabilityDistrib[], int probabilityDistrib_size, float randomNum) const{
+    /*
+    * Used for deterministic observations. Returns the that results from using the specified random number 
+    * with the given discrete probability distribution. 
+    * args:
+    *   - probabilityDistrib: probability distribution - the index in the array corresopnds to the probability associated with that index
+    *                         when being selected using the random number
+    *   - probabilityDistrib_size: the size of the probabilityDistrib array for memory safety
+    *   - randomNum: random number to use to generate the deterministic actions. - NOTE: float (0, 1)
+    * return:
+    *   - ret_index: index corresponding to the selected index in probabilityDistrib
+    */ 
+
+    float trackedProb = 0;
+    int ret_index = -1;
+    for (int index = 0; index < probabilityDistrib_size; index++) {
+        if (index == 0) {
+            trackedProb = probabilityDistrib[0];
+        } else {
+            trackedProb += probabilityDistrib[index];
+        }
+        // ensure that an action with zero probability id not being selected
+        if (randomNum <= trackedProb && probabilityDistrib[index] != 0) {
+            // this is the index to return 
+            ret_index = index;
+            return ret_index;
+        }
+    }
+    return ret_index;
+}
+
+
+void environment::observe_classes(float *ret_observed_classes, int ret_array_size, double rand_num) const {
+    /*
+    * Deterministic observation function that allows the robot to noisily see the classes of the obstacles.
+    * 
+    * Methodology: 
+    *   - keep track of the obstacles that the robot has interacted with in the step function. Allow their true classes to be observed a predefined 
+    *   TRUE_CLASS_OBSERVATION_PROB. 
+    * 
+    * Implementation methodology: 
+    *   - To support a large number of observations seed the random number generator with the rand_num * UINT_64MAX that comes in
+    *   then generate random numbers using the seeded generator to get random observations - sample for each obstacle
+    * args:
+    *   - rand_num: random number to make probabilistic output deterministic
+    * returns: pass by reference
+    *   - ret_observed_classes: the classes that were observed where the index corresponds to the obstacle number
+    *   - ret_array_size: for safe memory access - size of return array 
+    */ 
+    // TODO: MAY NEED TO CHANGE METHODOLOGY HERE TO NOT USE THE RANDOM SEEDING. 
+    // TODO: FINISH THIS FUNCTION
+
+    if (ret_array_size != num_obstacles_m) {
+        cerr << "ERROR: Invalid return array size in observe_classes function of the environment class" << endl;
+        exit(1);
+    }
+
+    // set up random sampling
+    unsigned int deterministic_seed_val = (unsigned) ((double)rand_num * (double)UINT_MAX); 
+    srand(deterministic_seed_val);
+    double sampledRandomNum;
+    int sampled_obs_k_index;
+    
+    // set up base probability array for sampling
+    int true_k_index;
+    float class_probability_distrib[NUM_OBS_K_CLASSES_g];
+    float other_class_probability;
+    if (NUM_OBS_K_CLASSES_g == 1) {
+        other_class_probability = 0;
+    } else {
+        other_class_probability = (float)(1 - TRUE_CLASS_OBSERVATION_PROB) / (float) (NUM_OBS_K_CLASSES_g - 1);
+    }
+    fill(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, other_class_probability);
+
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
+        if (class_observable_obstacles_m[obs_num]) {
+            // create a probability distribution based on the observed classes based on the true obstacle class 
+            auto itr = find(all_obstacle_ks_g, all_obstacle_ks_g + NUM_OBS_K_CLASSES_g, obstacles_m[obs_num].get_k());
+            if (itr != end(all_obstacle_ks_g)) {
+                true_k_index = distance(all_obstacle_ks_g, itr);
+            } else {
+                cerr << "ERROR: IN observe_classes: the k value of the obstacle " << obs_num << " was not valid - not in permissible set of obstacle k values" << endl;
+                exit(1);
+            }
+            class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB;
+            // TODO: REMOVE THIS!!!!
+            float total_prob = 0;
+            accumulate(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, total_prob);
+            if (total_prob != 1) {
+                cout << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
+                cerr << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
+                exit(1);
+            }
+            // END: TODO: REMOVE THIS!!!!
+
+            sampledRandomNum = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+            sampled_obs_k_index = randomNumToInt(class_probability_distrib, NUM_OBS_K_CLASSES_g, sampledRandomNum);
+            ret_observed_classes[obs_num] = sampled_obs_k_index;
+            // reset the class_probability distribution for the next obstacle
+            class_probability_distrib[true_k_index] = other_class_probability;
+        } else {
+            // TODO: put in some default value
+            ret_observed_classes[obs_num] = DEFAULT_NOTOBSERVED_OBS_K_g; 
+        }
+    }
+
+    return;
+}
+
 
 /*
 * ********************************************************************************
@@ -498,9 +618,20 @@ void environment::step(robotArmActions *actions, bool &error, float &cost) {
 
     // step the obstacles in response to the new robot position
     float total_obstacle_cost = 0;
+    float old_obstacle_y, new_obstacle_y;
     for (int i = 0; i < num_obstacles_m; i++) {
+        old_obstacle_y = obstacles_m[i].get_center().y;
         obstacles_m[i].step_to_deformed_center(robObj_m.arms_m, error, temp_cost);
         total_obstacle_cost += temp_cost;
+        // NOTE: change this to change when obstacle classes can be observed
+        new_obstacle_y = obstacles_m[i].get_center().y;
+        if (old_obstacle_y != new_obstacle_y) {
+            // only obstacles that have moved in the last time step are observable
+            class_observable_obstacles_m[i] = true;
+        } else {
+            class_observable_obstacles_m[i] = false;
+        }
+        
 
         if (error) {
             // rollback the robot and all obstacles up to and including the "ith" obstacle that you reached. Assign the cost to only the cost of having the obstacle error that was last returned
