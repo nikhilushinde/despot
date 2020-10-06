@@ -23,7 +23,7 @@ struct environmentState {
     obstacle obstacles[NUM_OBSTACLES_g];
 };
 
-class environment {
+class environment: public State {
 public:
     // constructor
     environment(); // default constructor of the environment
@@ -71,6 +71,7 @@ public:
     void observe_dists(cameraIntersectionDistance *ret_cam_intersection_dists, int ret_array_size) const; // observes using the camera's scan_environment_dists function and returns the intersection distances and types 
     int randomNumToInt(const float probabilityDistrib[], int probabilityDistrib_size, float randomNum) const; // to convert a random number to an integer based on a discrete probability distribution 
     void observe_classes(float *ret_observed_classes, int ret_array_size, double rand_num) const; //observes the classes of the obstacles that the robot just moved in the last round.  
+    OBS_TYPE class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const; // convert obstacle observations to an integer/obs_type for despot
     // other functions
 
     // set functions 
@@ -78,7 +79,7 @@ public:
     bool set_robot_arms_autoset_obstacles(const robotArmCoords new_arm_states[NUM_ROBOT_ARMS_g], const deflectionDirection deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g]); // sets the robot arm positions and the obstacles conform with it based on deflection directions
 
     // state mutation function
-    void step(robotArmActions *actions, bool &error, float &cost); //step the robot in the environment using the given actions
+    void step(const robotArmActions *actions, bool &error, float &cost); //step the robot in the environment using the given actions
     void state_rollback(); // rollback the state of the environment - rollback each obstacle and the robot
     bool reset(); // reset the positions of things in the environment
 

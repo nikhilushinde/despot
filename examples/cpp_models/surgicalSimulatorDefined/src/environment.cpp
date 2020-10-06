@@ -524,6 +524,52 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     return;
 }
 
+OBS_TYPE environment::class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const {
+    /*
+    * Convert the array of observed obstacle classes to an unsigned integer to be used by despot
+    * Methodology: 
+    *   - take the array of observed_obstacle_classes. If you have less than 10 possible obstacle classes then 
+    *   the units position will contain the index of the true class of obstacle 1 in all_possible_obs_ks_g PLUS ONE. the 
+    *   decimal place will contain this for obstacle 2 ... 
+    *   - If there are 10 or more possible classes - then similar method by the last 2 digits = 1st obstacle class etc. 
+    *   - NOTE: REMEMBER the index is offset by 1 - this is so that 0 can be used for no observatoin on that obstacle. 
+    * 
+    * NOTE: only support less than 100 possible obstacle classes
+    * 
+    * args:
+    *   - observed_obstacle_classes: the observation from the environment
+    *   - array_size: the size of the array for memory 
+    * returns:
+    *   - OBS_TYPE/unsigned int64 that uniquely corresponds to this observation. 
+    */ 
+
+    uint64_t digit_multiplier;
+    if (NUM_OBS_K_CLASSES_g < 10) {
+        digit_multiplier = 10;
+    } else {
+        digit_multiplier = 100;
+    }
+
+    OBS_TYPE converted_observation = 0;
+    OBS_TYPE k_index;
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
+
+        if (observed_obstacle_classes[obs_num] != DEFAULT_NOTOBSERVED_OBS_K_g) {
+            // create a probability distribution based on the observed classes based on the true obstacle class 
+            auto itr = find(all_obstacle_ks_g, all_obstacle_ks_g + NUM_OBS_K_CLASSES_g, obstacles_m[obs_num].get_k());
+            if (itr != end(all_obstacle_ks_g)) {
+                k_index = static_cast<OBS_TYPE>(distance(all_obstacle_ks_g, itr));
+            } else {
+                cerr << "ERROR: IN class_observations_to_obstype: the k value of the obstacle " 
+                    << obs_num << " was not valid - not in permissible set of obstacle k values" << endl;
+                exit(1);
+            }
+            converted_observation += pow(digit_multiplier, obs_num)*(k_index + 1);    
+        }   
+    }
+    return converted_observation;
+}
+
 
 /*
 * ********************************************************************************
@@ -592,7 +638,7 @@ bool environment::set_robot_arms_autoset_obstacles(const robotArmCoords new_arm_
 * BEGIN: Environment STATE mutation functions
 * ********************************************************************************
 */
-void environment::step(robotArmActions *actions, bool &error, float &cost) {
+void environment::step(const robotArmActions *actions, bool &error, float &cost) {
     /*
     * Steps in the enviornment by stepping the robot with the actions list. 
     * args:
