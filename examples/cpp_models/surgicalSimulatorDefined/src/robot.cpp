@@ -150,10 +150,12 @@ bool robot::set_arms(const robotArmCoords arm_coords[]) {
     * returns:
     *   - error: true if there was an error, else false 
     */ 
-    cout << endl << endl << "IN ROBOT SET ARMS FUNCTION:  " << endl << endl;
-    cout << "INITIAL CHECKS" << endl;
 
-    cout << "SETTING ARM COORDINATES" << endl;
+    if (debug_m) {
+        cout << endl << endl << "IN ROBOT SET ARMS FUNCTION:  " << endl << endl;
+        cout << "INITIAL CHECKS" << endl;
+        cout << "SETTING ARM COORDINATES" << endl;
+    }
     /* 1: SETTING ARM COORDINATES */
     bool error = false;
     // if arms has not been set, dynamically allocate the arms of the robot
@@ -164,12 +166,14 @@ bool robot::set_arms(const robotArmCoords arm_coords[]) {
             for (int i = 0; i < arm_num + 1; i ++)  {
                 arms_m[i].state_rollback();
             }
-            cout << "ROLLED BACK" << endl;
             return error;
         }
     }
 
-    cout << "CHECKING FOR INTER ARM COLLISIONS" << endl;
+    
+    if (debug_m) {
+        cout << "CHECKING FOR INTER ARM COLLISIONS" << endl;
+    }
     /* 2. CHECK FOR INTER ARM COLLISIONS */
     error = is_any_collision();
     if (error) { // there was a collision
@@ -180,7 +184,9 @@ bool robot::set_arms(const robotArmCoords arm_coords[]) {
         return error;
     }
 
-    cout << "SETTING ARM RELATIONS" << endl;
+    if (debug_m) {
+        cout << "SETTING ARM RELATIONS" << endl;
+    }
     /* 3. SETTING THE ARM RELATIONS */
     // set the arm relations - the error from this is the same as the if statement at the beginning so won't be relevant
     error = set_arm_relations(); // TODO: CHANGE THE SET ARM RELATIONS FUNCTION TO REFLECT THE NON DYNAMIC LIST USAGE
@@ -361,8 +367,10 @@ void robot::step(const robotArmActions actions[], int xy_step_size, int theta_de
     * TODO: REMOVE EXTRA LINES OF CODE - might want to change the cost structure and the way errors are treated ?
     */ 
 
-    cout << endl << endl;
-    cout << "IN FUNCTION ROBOT STEP " << endl << "STEPPING ALL THE ARMS" << endl;
+    if (debug_m) {
+        cout << endl << endl;
+        cout << "IN FUNCTION ROBOT STEP " << endl << "STEPPING ALL THE ARMS" << endl;
+    }
     /* 1. STEP ALL THE ARMS */
     for (int i = 0; i < NUM_ROBOT_ARMS_g; i++) {
         old_robot_arm_relations_m[i] = robot_arm_relations_m[i];
@@ -386,7 +394,9 @@ void robot::step(const robotArmActions actions[], int xy_step_size, int theta_de
     }
     cost = totalCost;
     
-    cout << "CHECKING FOR COLLISION" << endl;
+    if (debug_m) {
+        cout << "CHECKING FOR COLLISION" << endl;
+    }
     /* 2. CHECK FOR COLLISION */
     error = is_any_collision();
     if (error) {
@@ -401,7 +411,9 @@ void robot::step(const robotArmActions actions[], int xy_step_size, int theta_de
         return;
     }
 
-    cout << "CHECKING THAT THE ARM RELATIONS ARE PRESERVED" << endl;
+    if (debug_m) {
+        cout << "CHECKING THAT THE ARM RELATIONS ARE PRESERVED" << endl;
+    }
     int above_index; // index of the arm that should be above
     int below_index; // index of the arm that should be below
     /* 3. CHECK THAT ARM RELATIONS WERE NOT VIOLATED */
@@ -430,7 +442,9 @@ void robot::step(const robotArmActions actions[], int xy_step_size, int theta_de
         }
     }
 
-    cout << "SETTING THE ARM RELATIONS" << endl << endl;
+    if (debug_m) {
+        cout << "SETTING THE ARM RELATIONS" << endl << endl;
+    }
     /* 4. SET THE ARM RELATIONS - given that there were no errors */
     set_arm_relations();
     return;
