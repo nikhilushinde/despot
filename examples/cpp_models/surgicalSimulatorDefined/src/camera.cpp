@@ -8,6 +8,7 @@
 #include "camera.h"
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::min;
 using std::max;
@@ -35,6 +36,8 @@ camera::camera() {
     num_scan_angles_m = 0;
     angle_resolution_deg_m = 0;
     max_distance_m = 0;
+
+    debug_m = DEFAULT_DEBUG_FLAG_g;
 }
 
 camera::camera(robotArmCoords camera_coords, int corresponding_arm_index, int fov_degrees, int angle_resolution_deg, int max_distance) {
@@ -59,6 +62,7 @@ camera::camera(const camera &camera_to_copy) {
     max_distance_m = camera_to_copy.max_distance_m;
 
     num_scan_angles_m = camera_to_copy.num_scan_angles_m;
+    debug_m = camera_to_copy.debug_m;
 }
 
 /*
@@ -100,6 +104,8 @@ void camera::init_camera(robotArmCoords camera_coords, int corresponding_arm_ind
     for (float angle_deg = -angle_resolution_deg_m; angle_deg >= -half_fov_deg; angle_deg -= angle_resolution_deg_m) {
         num_scan_angles_m ++;
     }
+
+    debug_m = DEFAULT_DEBUG_FLAG_g;
 }
 
 /*
@@ -140,7 +146,7 @@ void camera::get_camera_scan_angles(float *ret_camera_scan_angles_deg, int ret_a
     * line that gets the reading from the environment. 
     */ 
     if (ret_array_size != num_scan_angles_m) {
-        cout << "Error in get camera scan angles" << endl;
+        cerr << "Error in get camera scan angles" << endl;
         throw cameraArrayReturnSizeException();
         return;
     }
@@ -188,7 +194,7 @@ void camera::get_arm_intersection_points(float scan_angle_deg, int num_robot_arm
     // should the camera ray intersection point have an x coordinate greater than the camera x coordinate. 
     bool intersection_greater_than_x = (-90 < scan_angle_deg && scan_angle_deg < 90);
     if (num_robot_arms != ret_array_size) {
-        cout << "Error in get arm intersection points" << endl;
+        cerr << "Error in get arm intersection points" << endl;
         throw cameraArrayReturnSizeException();
         return;
     }
@@ -359,7 +365,7 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
 
 
     if (num_obstacles != ret_array_size) {
-        cout << "Error in get obstacle intersection points" << endl;
+        cerr << "Error in get obstacle intersection points" << endl;
         throw cameraArrayReturnSizeException();
         return;
     }
@@ -439,11 +445,13 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
             }
         } 
     } else {
-
-        cout << endl << endl << "Inside the OBSTACLE GET INTERSECTION POINTS FUNCTION NOT 90" << endl;;
-        cout << "Inside the OBSTACLE GET INTERSECTION POINTS FUNCTION NOT 90 " << endl;
-        cout << scan_angle_deg << endl;
-        cout << num_obstacles << endl ;    
+        
+        if (debug_m) {
+            cout << endl << endl << "Inside the OBSTACLE GET INTERSECTION POINTS FUNCTION NOT 90" << endl;;
+            cout << "Inside the OBSTACLE GET INTERSECTION POINTS FUNCTION NOT 90 " << endl;
+            cout << scan_angle_deg << endl;
+            cout << num_obstacles << endl ;    
+        }
 
         // handles scanning obstacles with all other angles
         float a_qf, b_qf, c_qf;
@@ -465,7 +473,6 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
 
             obstacle_center = obstacles[obstacle_num].get_center();
             obstacle_radius = obstacles[obstacle_num].get_radius();
-            cout << "OBSTACLE GET INTERSECTION FUNCTION: THE OBSTACLE RADIUS IS:" << obstacle_radius << " from "<< obstacles[obstacle_num].get_radius() << endl;
 
             a_qf = 1 + pow(camera_ray_m, 2);
             b_qf = 2*(camera_ray_m * (camera_ray_b - obstacle_center.y) - obstacle_center.x);
@@ -475,22 +482,28 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
             if (cmp_floats(inside_sqrt, 0)) {
                 inside_sqrt = 0;
             }
-            cout << camera_ray_m << ", " << camera_ray_b << ", " << a_qf << ", " << b_qf << ", " << c_qf << endl;
-            cout << "inside sqrt: " << inside_sqrt << endl << endl;
+
+            if (debug_m) {
+                cout << "OBSTACLE GET INTERSECTION FUNCTION: THE OBSTACLE RADIUS IS:" << obstacle_radius << " from "<< obstacles[obstacle_num].get_radius() << endl;
+                cout << camera_ray_m << ", " << camera_ray_b << ", " << a_qf << ", " << b_qf << ", " << c_qf << endl;
+                cout << "inside sqrt: " << inside_sqrt << endl << endl;
+            }
             if (inside_sqrt >= 0) { // ensure that it is not nan
                 pos_int_x = (-b_qf + sqrt(inside_sqrt))/(2*a_qf);
                 pos_int_y = (camera_ray_m * pos_int_x) + camera_ray_b;
                 neg_int_x = (-b_qf - sqrt(inside_sqrt))/(2*a_qf);
                 neg_int_y = (camera_ray_m * neg_int_x) + camera_ray_b;
 
-                cout << "IN find OBSTACLE INTERSECTION function: " << endl;
-                cout << "pos: (" << pos_int_x << "," << pos_int_y << ")" << endl;
-                cout << "neg: (" << neg_int_x << "," << neg_int_y << ")" << endl;
-
                 // since we have perpendicular scans - camera ray straight up or down - thus intersect_x - camera_x = 0
                 pos_int_dist = sqrt(pow(pos_int_x - camera_coords_m.x, 2) + pow(pos_int_y - camera_coords_m.y, 2));
                 neg_int_dist = sqrt(pow(neg_int_x - camera_coords_m.x, 2) + pow(neg_int_y - camera_coords_m.y, 2));
-                cout << "posintdist: " << pos_int_dist << "negintdist: " << neg_int_dist << endl;
+                
+                if (debug_m) {
+                    cout << "IN find OBSTACLE INTERSECTION function: " << endl;
+                    cout << "pos: (" << pos_int_x << "," << pos_int_y << ")" << endl;
+                    cout << "neg: (" << neg_int_x << "," << neg_int_y << ")" << endl;
+                    cout << "posintdist: " << pos_int_dist << "negintdist: " << neg_int_dist << endl;
+                }
                 // the closer of the two intersection points will be registered by the camera ray - and if the closer point violates some other conditions - check if the other point should be set
                 if ((pos_int_dist <= max_distance_m || cmp_floats(pos_int_dist, max_distance_m)) && (pos_int_dist <= neg_int_dist || cmp_floats(pos_int_dist, neg_int_dist)) ) {
 
@@ -505,16 +518,13 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
                     }
 
                     if (intersection_x_criteria) {
-                        cout << "pos has been set" << endl;
                         ret_camera_intersection_pts[obstacle_num].x = pos_int_x;
                         ret_camera_intersection_pts[obstacle_num].y = pos_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
                         ret_camera_intersection_pts[obstacle_num].is_set = true;
 
                         pos_int_set = true;
-                    } else {
-                        cout << "pos didnt meet intersection x criteria" << endl;
-                    }
+                    } 
                 } else if ((neg_int_dist <= max_distance_m || cmp_floats(neg_int_dist, max_distance_m)) && (neg_int_dist < pos_int_dist || !pos_int_set)) {
                     // positive intersection point was not set, check to see if the negative intersection point should be set
                     if (intersection_greater_than_x) {
@@ -528,16 +538,17 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
                     }
 
                     if (intersection_x_criteria) {
-                        cout << "neg has been set " << endl;
                         ret_camera_intersection_pts[obstacle_num].x = neg_int_x;
                         ret_camera_intersection_pts[obstacle_num].y = neg_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
                         ret_camera_intersection_pts[obstacle_num].is_set = true;
                     } else {
-                        cout << "neg didnt meet intersection x criteria" << endl;
-                        cout << "CAMERA: " << camera_coords_m.x << "," << camera_coords_m.y << endl;
-                        cout << "INTERSECTION POINT: " << neg_int_x << "," << neg_int_y << endl;
-                        cout << "x equal: " << (neg_int_x == camera_coords_m.x) << ", x difference: " <<  neg_int_x - camera_coords_m.x << endl;
+                        if (debug_m) {
+                            cout << "neg didnt meet intersection x criteria" << endl;
+                            cout << "CAMERA: " << camera_coords_m.x << "," << camera_coords_m.y << endl;
+                            cout << "INTERSECTION POINT: " << neg_int_x << "," << neg_int_y << endl;
+                            cout << "x equal: " << (neg_int_x == camera_coords_m.x) << ", x difference: " <<  neg_int_x - camera_coords_m.x << endl;
+                        }
                     }
                 }
             }
@@ -681,11 +692,13 @@ void camera::single_scan(float scan_angle_deg, int num_robot_arms, const robot_a
         }
     }
 
-    cout << "in single scan camera: all the distances: " << endl;
-    for (int i = 0; i < num_robot_arms + num_obstacles; i ++) {
-        cout <<   distances[i] << ",";
+    if (debug_m) {
+        cout << "in single scan camera: all the distances: " << endl;
+        for (int i = 0; i < num_robot_arms + num_obstacles; i ++) {
+            cout <<   distances[i] << ",";
+        }
+        cout << endl;
     }
-    cout << endl;
 
     if (!any_set) {
         float camera_ray_m, camera_ray_b;
@@ -696,7 +709,7 @@ void camera::single_scan(float scan_angle_deg, int num_robot_arms, const robot_a
         // if nothing set, just return an intersection point max_distance away in the appropriate direction (bounded)
         ret_camera_intersection_point.x = min(max((max_distance_m * cos(scan_angle_deg * THETA_MULTIPLIER)) + camera_coords_m.x, (float) 0.0), (float) ENV_LENGTH_g);
         ret_camera_intersection_point.y = min(max( (camera_ray_m * ret_camera_intersection_point.x) + camera_ray_b, (float) 0.0), (float) ENV_HEIGHT_g);
-        cout << "Nothing set so set to " << ret_camera_intersection_point.x << "," << ret_camera_intersection_point.y << endl;
+
         // set the type
         if (ret_camera_intersection_point.x == 0) {
             ret_camera_intersection_point.int_type = int_left_wall;
@@ -738,7 +751,7 @@ void camera::scan_environment(int num_robot_arms, const robot_arm *arms, int num
     *   - ret_camera_intersection_points: pointer to an array with length ret_array_size that we populate to return the intersection points
     */
     if (ret_array_size != num_scan_angles_m) {
-        cout << "Error in scan environment" << endl;
+        cerr << "Error in scan environment" << endl;
         throw cameraArrayReturnSizeException();
         return;
     }
@@ -756,12 +769,17 @@ void camera::scan_environment(int num_robot_arms, const robot_arm *arms, int num
     this->get_camera_scan_angles(all_camera_scan_angles, num_scan_angles_m);
 
     for (int angle_index = 0; angle_index < num_scan_angles_m; angle_index ++) {
-        this->single_scan(all_camera_scan_angles[angle_index], num_robot_arms, arms, num_obstacles, obstacles, temp_intersection_point);
-        cout << "angle: " << all_camera_scan_angles[angle_index] << endl;
-        cout << "intersection point: " << temp_intersection_point.x << "," << temp_intersection_point.y << endl << endl;
+        this->single_scan(all_camera_scan_angles[angle_index], num_robot_arms, arms, num_obstacles, obstacles, temp_intersection_point);\
         ret_camera_intersection_points[angle_index] = temp_intersection_point;
-        if (!temp_intersection_point.is_set) {
-            cout << "ERROR ERROR ERROR: SHOULD HAVE BEEN SET" << endl << "ERROR ERROR ERROR: SHOULD HAVE BEEN SET" << endl <<endl;
+
+        if (debug_m) {
+            cout << "angle: " << all_camera_scan_angles[angle_index] << endl;
+            cout << "intersection point: " << temp_intersection_point.x << "," << temp_intersection_point.y << endl << endl;
+        }
+
+        if (camera_coords_m.x != 0 && !temp_intersection_point.is_set) {
+            cerr << "ERROR: In Scan Environment of camera class - scan points should have been set" <<endl;
+            exit(1);
         }
     }
     return;
@@ -782,7 +800,7 @@ void camera::scan_environment_distance(int num_robot_arms, const robot_arm *arms
     */ 
 
     if (ret_array_size != num_scan_angles_m) {
-        cout << "Error in scan environment distance" << endl;
+        cerr << "Error in scan environment distance" << endl;
         throw cameraArrayReturnSizeException();
         return;
     }

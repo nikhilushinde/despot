@@ -98,6 +98,7 @@ private:
     // calculated attributes - upon initialization
     int num_scan_angles_m; // the number of scan angles of the camera - is set after calculation using m_fov_deg and m_angle_resolution_deg in init_camera function
 
+    bool debug_m; // boolean debug flag
     // TODO: ADD SCAN AND LAST_ENVIRONMENT_SCAN VARIABLES - figure out the datatype for the scan. - see if this is even needed. 
 };
 
