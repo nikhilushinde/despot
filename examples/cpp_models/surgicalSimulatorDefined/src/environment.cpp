@@ -555,6 +555,60 @@ OBS_TYPE environment::class_observations_to_obstype(const float observed_obstacl
     return converted_observation;
 }
 
+double environment::get_class_obs_prob(OBS_TYPE obs, ACT_TYPE action) const {
+    /*
+    * Function to get the probability of observation obs from the current given that action was used to get to that state
+    * args:
+    *   - obs: observation that is a uint64_t - that represents an array of observed classes
+    *   - action: action to get to current state
+    * returns:
+    *   - probability: double between [0, 1]
+    * 
+    * NOTE: ONLY SUPPORTS UP TO LESS THAN 100 possible obstacle k classes
+    */
+
+    int digit_multiplier;
+    if (NUM_OBS_K_CLASSES_g < 10) {
+        digit_multiplier = 10;
+    } else {
+        digit_multiplier = 100;
+    }
+    float obs_class_array[NUM_OBSTACLES_g];
+    int current_obstacle_k_index; 
+    float current_obstacle_observed_kval;
+    double total_probability = 1.0; 
+
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
+        // get the class observation from the OBS_TYPE number
+        int mod_num = pow(digit_multiplier, obs_num + 1);
+        current_obstacle_k_index = obs % mod_num;
+        int div_num = pow(digit_multiplier, obs_num);
+        current_obstacle_k_index = static_cast<int>(current_obstacle_k_index/div_num);
+        current_obstacle_k_index -= 1; // NOTE: remember the 1 shift to have 0 as the default
+
+        if (current_obstacle_k_index >= 0) {
+            current_obstacle_observed_kval = all_possible_obs_ks_g[current_obstacle_k_index];
+        } else { 
+            current_obstacle_observed_kval = DEFAULT_NOTOBSERVED_OBS_K_g;
+        }
+
+        // update the total probability depending on the seen class
+        if (!class_observable_obstacles_m[obs_num] && current_obstacle_observed_kval != DEFAULT_NOTOBSERVED_OBS_K_g) {
+            return 0; // no probability of getting any real observation if the obstacle is not observable
+        } else if (class_observable_obstacles_m[obs_num] && current_obstacle_observed_kval == DEFAULT_NOTOBSERVED_OBS_K_g) {
+            return 0; // always get some sort of observation if the obstacle is observable
+        }
+
+        if (current_obstacle_observed_kval == obstacles_m[obs_num].get_k()) {
+            total_probability *= static_cast<double>(TRUE_CLASS_OBSERVATION_PROB);
+        } else {
+            total_probability *= (1.0 - static_cast<double>(TRUE_CLASS_OBSERVATION_PROB));
+        }
+
+    }
+    return total_probability;
+}
+
 
 /*
 * ********************************************************************************
