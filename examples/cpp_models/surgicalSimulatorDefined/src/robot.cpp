@@ -32,7 +32,7 @@ robot::robot() {
         cerr << "The number of robot arms must be set to greater than 0 to initialize the robot" << endl;
         exit(1);
     }
-    debug_m = DEFAULT_DEBUG;
+    debug_m = DEFAULT_DEBUG_FLAG_g;
 
     // set the robot arms to the default robot arm coordinates that are defined in the defined parameters file
     robotArmCoords arm_coords[NUM_ROBOT_ARMS_g];
