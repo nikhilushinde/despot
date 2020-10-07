@@ -170,9 +170,17 @@ int main() {
             for (int i = 0; i < NUM_OBSTACLES_g; i++) {
                 cout << observed_classes[i] << ", ";
             }
+
+            OBS_TYPE obs = env.class_observations_to_obstype(observed_classes, NUM_OBSTACLES_g);
             cout << endl;
-            cout << "Observed class as OBS_TYPE:  " << env.class_observations_to_obstype(observed_classes, NUM_OBSTACLES_g) << endl; 
+            cout << "Observed class as OBS_TYPE:  " <<  obs << endl; 
             cout << endl;
+
+            double obsProb = env.get_class_obs_prob(obs, 0);
+            cout << "Probability of the seem observation: " << obs << " is: " << obsProb  << endl;
+
+            cout << "True class number should be: " << env.class_observations_to_obstype(all_obstacle_ks_g, NUM_OBSTACLES_g) << endl;
+
             continue;
         } else {
             cout << "INVALID ENTRY!!" << endl << endl << endl;

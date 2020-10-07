@@ -597,12 +597,14 @@ double environment::get_class_obs_prob(OBS_TYPE obs, ACT_TYPE action) const {
             return 0; // no probability of getting any real observation if the obstacle is not observable
         } else if (class_observable_obstacles_m[obs_num] && current_obstacle_observed_kval == DEFAULT_NOTOBSERVED_OBS_K_g) {
             return 0; // always get some sort of observation if the obstacle is observable
-        }
-
-        if (current_obstacle_observed_kval == obstacles_m[obs_num].get_k()) {
-            total_probability *= static_cast<double>(TRUE_CLASS_OBSERVATION_PROB);
-        } else {
-            total_probability *= (1.0 - static_cast<double>(TRUE_CLASS_OBSERVATION_PROB));
+        } 
+        
+        if (current_obstacle_observed_kval != DEFAULT_NOTOBSERVED_OBS_K_g) {
+            if (current_obstacle_observed_kval == obstacles_m[obs_num].get_k()) {
+                total_probability *= static_cast<double>(TRUE_CLASS_OBSERVATION_PROB);
+            } else {
+                total_probability *= (1.0 - static_cast<double>(TRUE_CLASS_OBSERVATION_PROB));
+            }
         }
 
     }
