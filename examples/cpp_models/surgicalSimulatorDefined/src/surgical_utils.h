@@ -13,8 +13,8 @@
 #include "defined_parameters.h"
 
 // the despot related includes
-//#include <despot/interface/pomdp.h>
-//#include <despot/core/mdp.h>
+#include <despot/interface/pomdp.h>
+#include <despot/core/mdp.h>
 
 namespace despot {
 
@@ -48,6 +48,7 @@ struct environmentCoords {
 
 void action_to_movements(robotArmActions action, int xy_step_size, int theta_deg_step_size, int &delta_x, int &delta_y, int &delta_theta_degrees);
 bool cmp_floats(float a, float b); // compare floats with some epsilon value
+int random_number_to_index(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum); // to convert a random number to an integer based on a discrete probability distribution 
 
 } // end namespace despot
 

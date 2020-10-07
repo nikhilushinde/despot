@@ -27,7 +27,7 @@ struct environmentState {
 typedef uint64_t OBS_TYPE;
 typedef int ACT_TYPE;
 
-class environment { //: public State {
+class environment: public State {
 public:
     // constructor
     environment(); // default constructor of the environment
@@ -73,7 +73,7 @@ public:
 
     void observe_points(cameraIntersectionPoint *ret_cam_intersection_points, int ret_array_size) const; // observes using the camera's scan_environment function and returns intersectoin points with the environment and the intersection types
     void observe_dists(cameraIntersectionDistance *ret_cam_intersection_dists, int ret_array_size) const; // observes using the camera's scan_environment_dists function and returns the intersection distances and types 
-    int randomNumToInt(const float probabilityDistrib[], int probabilityDistrib_size, float randomNum) const; // to convert a random number to an integer based on a discrete probability distribution 
+    int randomNumToInt(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum) const; // to convert a random number to an integer based on a discrete probability distribution 
     void observe_classes(float *ret_observed_classes, int ret_array_size, double rand_num) const; //observes the classes of the obstacles that the robot just moved in the last round.  
     OBS_TYPE class_observations_to_obstype(const float observed_obstacle_classes[], int array_size) const; // convert obstacle observations to an integer/obs_type for despot
     double get_class_obs_prob(OBS_TYPE obs, ACT_TYPE action) const; // get the probability of the observation given the observation and the action to get the current state

@@ -409,7 +409,7 @@ void environment::observe_dists(cameraIntersectionDistance *ret_cam_intersection
     cam_m.scan_environment_distance(num_robot_arms_m, robObj_m.arms_m, num_obstacles_m, obstacles_m, ret_cam_intersection_dists, ret_array_size);
 }
 
-int environment::randomNumToInt(const float probabilityDistrib[], int probabilityDistrib_size, float randomNum) const{
+int environment::randomNumToInt(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum) const{
     /*
     * Used for deterministic observations. Returns the that results from using the specified random number 
     * with the given discrete probability distribution. 
@@ -422,6 +422,8 @@ int environment::randomNumToInt(const float probabilityDistrib[], int probabilit
     *   - ret_index: index corresponding to the selected index in probabilityDistrib
     */ 
 
+    /*
+    // TODO: REMOVE THIS
     float trackedProb = 0;
     int ret_index = -1;
     for (int index = 0; index < probabilityDistrib_size; index++) {
@@ -438,6 +440,8 @@ int environment::randomNumToInt(const float probabilityDistrib[], int probabilit
         }
     }
     return ret_index;
+    */
+    return random_number_to_index(probabilityDistrib, probabilityDistrib_size, randomNum);
 }
 
 
@@ -474,12 +478,12 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     
     // set up base probability array for sampling
     int true_k_index;
-    float class_probability_distrib[NUM_OBS_K_CLASSES_g];
-    float other_class_probability;
+    double class_probability_distrib[NUM_OBS_K_CLASSES_g];
+    double other_class_probability;
     if (NUM_OBS_K_CLASSES_g == 1) {
         other_class_probability = 0;
     } else {
-        other_class_probability = (float)(1 - TRUE_CLASS_OBSERVATION_PROB) / (float) (NUM_OBS_K_CLASSES_g - 1);
+        other_class_probability = (double)(1 - TRUE_CLASS_OBSERVATION_PROB) / (double) (NUM_OBS_K_CLASSES_g - 1);
     }
     fill(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, other_class_probability);
 

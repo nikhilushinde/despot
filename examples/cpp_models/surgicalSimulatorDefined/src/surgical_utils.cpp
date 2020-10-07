@@ -64,4 +64,35 @@ bool cmp_floats(float a, float b) {
     }
 }
 
+int random_number_to_index(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum) {
+    /*
+    * Used for deterministic observations. Returns the that results from using the specified random number 
+    * with the given discrete probability distribution. 
+    * args:
+    *   - probabilityDistrib: probability distribution - the index in the array corresopnds to the probability associated with that index
+    *                         when being selected using the random number
+    *   - probabilityDistrib_size: the size of the probabilityDistrib array for memory safety
+    *   - randomNum: random number to use to generate the deterministic actions. - NOTE: float (0, 1)
+    * return:
+    *   - ret_index: index corresponding to the selected index in probabilityDistrib
+    */ 
+
+    float trackedProb = 0;
+    int ret_index = -1;
+    for (int index = 0; index < probabilityDistrib_size; index++) {
+        if (index == 0) {
+            trackedProb = probabilityDistrib[0];
+        } else {
+            trackedProb += probabilityDistrib[index];
+        }
+        // ensure that an action with zero probability id not being selected
+        if (randomNum <= trackedProb && probabilityDistrib[index] != 0) {
+            // this is the index to return 
+            ret_index = index;
+            return ret_index;
+        }
+    }
+    return ret_index;
+}
+
 } // end namespace despot

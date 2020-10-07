@@ -11,6 +11,7 @@
 #include <despot/interface/pomdp.h>
 #include <despot/core/mdp.h>
 #include "environment.h"
+#include "render_sim.h"
 
 
 namespace despot {
@@ -18,7 +19,6 @@ namespace despot {
 class SurgicalDespot: public DSPOMDP {
 protected:
     mutable MemoryPool<environment> memory_pool_;
-    std::vector <environment*> states_;
 public: 
     SurgicalDespot(); // constructor
 
@@ -52,7 +52,7 @@ public:
     void Free(State* particle) const;
     int NumActiveParticles() const;
 
-    void MostLikelyRobPosition(const std::vector <State*>&particles, int &retRobX, int &retRobY) const; // get the most likely robot position from a set of particles
+    //void MostLikelyRobPosition(const std::vector <State*>&particles, int &retX, int &retY, float &retThetaDeg) const; // get the most likely robot position from a set of particles
 
     /* END: REQUIRED FUNCTIONS FOR DESPOT */
     /* ======= Display Functions: ========*/
@@ -67,6 +67,7 @@ public:
     void PrintBelief(const Belief& belief, std::ostream& out = std::cout) const;
 
 private:
+    render_sim renderer; // object use to render the environment
     
 };
 
