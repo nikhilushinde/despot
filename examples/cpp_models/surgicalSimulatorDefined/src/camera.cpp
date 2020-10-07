@@ -294,17 +294,21 @@ void camera::get_arm_intersection_points(float scan_angle_deg, int num_robot_arm
                 }
 
                 if (camera_coords_m.x <= arms[arm_index].get_x()) {
-                    // if the arm is ahead
-                    ret_camera_intersection_pts[arm_index].x =camera_coords_m.x;
-                    ret_camera_intersection_pts[arm_index].y =camera_coords_m.y;
-                    ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
-                    ret_camera_intersection_pts[arm_index].is_set = true;
+                    // if the arm is ahead - the camera detects the arm ahead of it
+                    if (intersection_greater_than_x) {
+                        ret_camera_intersection_pts[arm_index].x =camera_coords_m.x;
+                        ret_camera_intersection_pts[arm_index].y =camera_coords_m.y;
+                        ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
+                        ret_camera_intersection_pts[arm_index].is_set = true;
+                    }
                 } else {
-                    // if arm is not ahead
-                    ret_camera_intersection_pts[arm_index].x = arms[arm_index].get_x();
-                    ret_camera_intersection_pts[arm_index].y = arms[arm_index].get_y();
-                    ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
-                    ret_camera_intersection_pts[arm_index].is_set = true;
+                    // if arm is not ahead - the camera detects the arm behind it 
+                    if (!intersection_greater_than_x) {
+                        ret_camera_intersection_pts[arm_index].x = arms[arm_index].get_x();
+                        ret_camera_intersection_pts[arm_index].y = arms[arm_index].get_y();
+                        ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
+                        ret_camera_intersection_pts[arm_index].is_set = true;
+                    }
                 }
             }
 

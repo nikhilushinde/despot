@@ -44,7 +44,7 @@ enum deflectionDirection {
 #define THETA_DEG_STEP_SIZE_g 5 // size of the theta step size in degrees
 
 #define DEFAULT_DEBUG_FLAG_g false // set the  debug flag for all the objects in the environment
-#define DEFAULT_DEBUG false // TODO: REMOVE THIS
+
 /* 
 * ********************************************
 * Obstacle characteristics 
