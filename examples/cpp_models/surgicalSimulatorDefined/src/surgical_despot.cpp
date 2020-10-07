@@ -23,6 +23,127 @@ namespace despot {
 * Tag Default Policy class: to get a LOWER BOUND in  DESPOT. 
 * ***********************************************************************************
 */
+class SurgicalDespotHistoryPolicy: public DefaultPolicy {
+/*
+* This is a history based rollout policy to get the lower bounds for the environment in DESPOT
+* Policy methodology: 
+*   - If there is no history take a random action that does not run into walls. If there is a history
+*   take actions that do not double back on the last action. 
+*/
+private:
+    const SurgicalDespot *surgicalDespot_m; // pointer to the SurgicalDespot 
+
+public:
+    SurgicalDespotHistoryPolicy(const DSPOMDP* model, ParticleLowerBound* bound):
+    DefaultPolicy(model, bound) {
+        /*
+        * Constructor to initialize the History based default policy
+        * args:
+        *   - model: DSPOMDP model - SurgicalDespot
+        *   - bound: a particle lower bound to use after the finite random number streams used when the default policy runs out
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+    }
+
+    bool isFeasibleAction(int action_num, environment& environment_state) const {
+        /*
+        * Returns if the specified action number is feasible: in regards that it does not cause 
+        * the robot arms to go out of bounds. 
+        * 
+        * NOTE: Does not check for obstacle related collisions as those may be different in different particles
+        */ 
+        robotArmActions action_array[NUM_ROBOT_ARMS_g];
+        // convert the integer to actions
+        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+
+        bool error; 
+        float cost;
+        environment_state.robObj_m.step(action_array, XY_STEP_SIZE_g, THETA_DEG_STEP_SIZE_g, error, cost);
+        
+        // if error robot object auto rollbacks - else we roll it back ourself
+        if (error) {
+            return false;
+        } else {
+            environment_state.robObj_m.state_rollback();
+            return true;
+        }
+    }
+
+    bool isReverseAction(ACT_TYPE act1, ACT_TYPE act2) const {
+        /*
+        * checks if act2 undoes the effects of act1
+        * returns:
+        *   - boolean: true if the act1 reverses act2 else false
+        */ 
+        robotArmActions act_array1[NUM_ROBOT_ARMS_g];
+        robotArmActions act_array2[NUM_ROBOT_ARMS_g];
+
+        surgicalDespot_m->IntToActions(act1, act_array1, NUM_ROBOT_ARMS_g);
+        surgicalDespot_m->IntToActions(act2, act_array2, NUM_ROBOT_ARMS_g);
+
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
+            if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
+            (act_array2[arm_num] == stay && act_array1[arm_num] != stay )) {
+                return false;
+            } 
+            bool isReverse = ((act_array1[arm_num] == xRight && act_array2[arm_num] == xLeft) ||
+                (act_array1[arm_num] == xLeft && act_array2[arm_num] == xRight) ||
+                (act_array1[arm_num] == yUp && act_array2[arm_num] == yDown) ||
+                (act_array1[arm_num] == yDown && act_array2[arm_num] == yUp) ||
+                (act_array1[arm_num] == thetaUp && act_array2[arm_num] == thetaDown) ||
+                (act_array1[arm_num] == thetaDown && act_array2[arm_num] == thetaUp));
+            return isReverse; // return immediately as only 1 non stay action. 
+        }
+
+        return false;
+
+    }
+
+    ACT_TYPE Action(const vector<State*>& particles, RandomStreams &streams, History& history) const{
+        /*
+        * This function returns the action to take when using this history based policy. The action
+        * is based on the current belief particles, a stream of random numbers that indicate the scenarios
+        * and the history of actions that has been taken. 
+        * returns:
+        *   - action that should be taken
+        * 
+        * Methodlogy: described above
+        * NOTE: this policy only moves the first/0th indexed arm
+        */
+       
+        // Since all environments have the same robot location - just use the robot location in a particle
+        robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
+        const environment* environment_state = static_cast<const environment *>(particles[0]);
+        // create a copy of the environment to get valid arm actions
+        environment cpy_environment_state = environment(*environment_state);
+        
+        vector <ACT_TYPE> feasible_actions;
+
+        // If the history is empty then take a random move that does not run into the wall
+        if (history.Size() == 0) {
+            for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                if (isFeasibleAction(action_num, cpy_environment_state)) {
+                    feasible_actions.push_back(action_num);
+                }
+            }
+        } else {
+            for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                if (isFeasibleAction(action_num, cpy_environment_state) && 
+                !isReverseAction(action_num, history.LastAction())) {
+                    feasible_actions.push_back(action_num);
+                }
+            }
+        }
+        
+        
+        if (feasible_actions.size() == 0) {
+            cerr << "ERROR: in the lower bound policy action - should always have some feasible actions" << endl;
+            exit(1);
+        }
+        int ret_feasible_action_index = Random::RANDOM.NextInt(feasible_actions.size());
+        return feasible_actions[ret_feasible_action_index];
+    }   
+};
 
 
 /*
@@ -33,8 +154,8 @@ namespace despot {
 class SurgicalDespotEuclideanUpperBound: public ParticleUpperBound, public BeliefUpperBound {
 /*
 * This class creates an upper bound on the reward for the environment using the metric of Euclidean 
-* distance of the first arm from the goal coordinate minus the goal radius and the potential number 
-* of steps it would take to get there. 
+* distance of the closest arm of the robot from the goal coordinate minus the goal radius and the 
+* potential number of steps it would take to get there. 
 */
 protected: 
     const SurgicalDespot *surgicalDespot_m; // pointer to DSPOMDP model of SurgicalDespot
@@ -48,19 +169,26 @@ public:
 
     double EuclideanDistanceCalc(const environment &environment_state) const {
         /*
-        * Utility function used to find the Euclidean distance from the first arm of the robot to the goal coordinate minus the goal radius
+        * Utility function used to find the Euclidean distance from the closest arm of the robot to the goal coordinate minus the goal radius
         */ 
         robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
         environmentCoords env_state_goal_coord;
         environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
 
-        float x = static_cast<float>(env_state_robot_coords[0].x);
-        float y = static_cast<float>(env_state_robot_coords[0].y);
-
+        double min_dist;
+        double arm_dist; 
+        float x;
+        float y;
         env_state_goal_coord = environment_state.get_goal_coord();
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+            x = static_cast<float>(env_state_robot_coords[arm_num].x);
+            y = static_cast<float>(env_state_robot_coords[arm_num].y);
 
-        return static_cast<double>(sqrt(pow(x - env_state_goal_coord.x, 2) + pow(y - env_state_goal_coord.y, 2))) 
-            - static_cast<double>(environment_state.get_goal_radius());
+            arm_dist = static_cast<double>(sqrt(pow(x - env_state_goal_coord.x, 2) + pow(y - env_state_goal_coord.y, 2))) 
+                - static_cast<double>(environment_state.get_goal_radius());
+            arm_dist = std::min(std::max(arm_dist, static_cast<double>(0)), min_dist);
+        }
+        return min_dist;
     }
 
     using ParticleUpperBound::Value; 
@@ -140,8 +268,9 @@ void SurgicalDespot::IntToActions(int actionNum, robotArmActions *ret_action_arr
     for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
         if (arm_num == arm_to_move_index) {
             ret_action_array[arm_to_move_index] = static_cast<robotArmActions>(actionNum%num_actions_per_arm);
-        }   
-        ret_action_array[arm_num] = stay;
+        } else {
+            ret_action_array[arm_num] = stay;
+        }
     }
     return;
 }
@@ -209,7 +338,7 @@ double SurgicalDespot::ObsProb(OBS_TYPE obs, const State& state, ACT_TYPE action
 }
 
 
-State* SurgicalDespot::CreateStartState(std::string type = "DEFAULT") const {
+State* SurgicalDespot::CreateStartState(std::string type) const {
     /*
     * Creates a random start state of type "environment". This state is allocated
     * in dynamic memory and the pointer to this state is returned. This creates a new
@@ -235,10 +364,19 @@ State* SurgicalDespot::CreateStartState(std::string type = "DEFAULT") const {
 
     environment *new_env = new environment();
     new_env->set_obstacle_ks(init_obstacle_ks);
+
+    cout << "Created start state with initial obstacle ks: ";
+    for (int i = 0; i < NUM_OBSTACLES_g; i++) {
+        cout << init_obstacle_ks[i] << ", ";
+    }
+    cout << endl;
+    cout << "is start state at goal: " << new_env->at_goal() << endl;
+    cout << "the number of actions: " << NumActions() << endl;
+
     return  new_env;
 }
 
-Belief* SurgicalDespot::InitialBelief(const State* start, std::string type = "DEFAULT") const {
+Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) const {
     /*
     * Creates the initial belief for the problem. Uses a uniform belief on all possible class configurations. 
     * args:
@@ -255,7 +393,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type = "DE
         double uniform_particle_weight = 1.0/total_num_states;
         cout << "The uniform particle weight is: " << uniform_particle_weight << endl;
         environment *new_particle_state;
-        cout << "IN INITIAL BELIEF FOR TAGNIKHIL" << endl;
+        cout << "IN INITIAL BELIEF FOR SurgicalDespot" << endl;
 
         // TODO: CHANGE FROM HARD CODING FOR 3 OBSTACLES
         if (NUM_OBSTACLES_g != 3) {
@@ -275,6 +413,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type = "DE
                 }
             }
         }
+        cout << "Total number of particles created: " << particles.size() << endl;
         return new ParticleBelief(particles, this);
     } else {
         cerr << "[TagNikhil::InitialBelief] Unsupported belief type: " << type << endl;
@@ -366,9 +505,7 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         // Use the smart history based default rollout policy to create the lower bound
         //return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
-        cerr << "Finish creating lower bound" << endl;
-        exit(1);
-        // TODO: FINISH THIS 
+        return new SurgicalDespotHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
     } else {
         cerr << "Specified Lower Bound " << name << " is NOT SUPPORTED!";
         exit(1);
@@ -466,6 +603,13 @@ void SurgicalDespot::PrintAction(ACT_TYPE action, std::ostream& out)  const {
             cout << "stay" << ", ";
         }
     }
+    cout << endl;
+    cout << "The action number was: " <<  action << endl;
+    cout << "The found action array was: "; 
+    for (int i = 0; i < NUM_ROBOT_ARMS_g; i++) {
+        cout << action_array[i] << ", ";
+    }
+    cout << endl;
 }
 
 void SurgicalDespot::PrintBelief(const Belief& belief, std::ostream& out) const {

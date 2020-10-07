@@ -98,6 +98,7 @@ public:
     float obstacle_center_x_m[NUM_OBSTACLES_g]; // list of the x values of the centers of all the obstacles
     float obstacle_center_y_m[NUM_OBSTACLES_g]; // list of the original y values of the centers of all the obstacles
 
+    robot robObj_m; // the actual robot object
 private:
     /* NOTE: End everything in _m to indicate that these variables are attributes the environment class */
     // environment attributes 
@@ -112,7 +113,6 @@ private:
     int theta_deg_step_size_m;
     int num_robot_arms_m; // the number of robot arms that the robot has 
     robotArmCoords robot_arm_start_coords_m[NUM_ROBOT_ARMS_g]; // list of the starting coordinates for all the robot arms in the robot
-    robot robObj_m; // the actual robot object
 
     // obstacle attributes 
     bool obstacle_limit_m; // boolean flag that if true limits obstacles so that part of the obstacles cannot be out of bounds

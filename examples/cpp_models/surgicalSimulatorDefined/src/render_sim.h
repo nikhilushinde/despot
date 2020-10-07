@@ -29,7 +29,7 @@ public:
     void render_environment(const environment &env) const; // render the environment - all the robot arms and all the obstacles
 
 private:
-    char window_name_m[20];
+    string window_name_m;
 
     bool debug_m; // boolean debug flag
 };

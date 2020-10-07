@@ -35,7 +35,7 @@ obstacle::obstacle() {
     radius_m = 0;
     k_m = 0;
 
-    debug_m = DEFAULT_DEBUG_FLAG_g;
+    debug_m = false; //DEFAULT_DEBUG_FLAG_g;
 }
 
 obstacle::obstacle(environmentCoords orig_center, int radius, float k, const deflectionDirection *deflection_directions, bool debug, const robot_arm arms[], bool &error) {
@@ -64,7 +64,7 @@ obstacle::obstacle(const obstacle &obstacle_to_copy) {
         old_deflection_directions_m[arm_num] = obstacle_to_copy.old_deflection_directions_m[arm_num];
     }
 
-    debug_m = obstacle_to_copy.debug_m;
+    debug_m = false;//obstacle_to_copy.debug_m;
 }
 
 /*
@@ -115,7 +115,7 @@ bool obstacle::init_obstacle(environmentCoords orig_center, int radius, float k,
     */ 
     radius_m = radius;
     k_m = k;
-    debug_m = debug;
+    debug_m = false;//debug;
 
     // init deflection direction lists
     for (int i = 0; i < NUM_ROBOT_ARMS_g; i ++) {

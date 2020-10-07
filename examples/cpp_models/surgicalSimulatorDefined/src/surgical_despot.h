@@ -17,6 +17,10 @@
 namespace despot {
 
 class SurgicalDespot: public DSPOMDP {
+
+friend class SurgicalDespotHistoryPolicy;
+friend class SurgicalDespotEuclideanUpperBound;
+
 protected:
     mutable MemoryPool<environment> memory_pool_;
 public: 
