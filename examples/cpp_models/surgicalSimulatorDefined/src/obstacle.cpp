@@ -369,7 +369,7 @@ environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDir
     * returns:
     *   - deflected_center: deflected center of this object 
     */
-    cout << "IN STUCK CENTER FUNCTION: the arm coordinate given here is (" << arm.get_x() << "," << arm.get_y() << endl;
+    
     environmentCoords stuck_center;
     stuck_center.x = 0;
     stuck_center.y = 0;
@@ -386,7 +386,6 @@ environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDir
     float m, b, x_c, y_c;
     arm.find_startpt_slope(start_pt, m);
 
-    cout << "THE SLOPE OF THE ARM IS: " << m << " and the start point is: (" << start_pt.x  << ',' << start_pt.y << ')' << endl;
     b = start_pt.y;
     x_c = orig_center_m.x;
     y_c = m*x_c + b;
@@ -411,7 +410,12 @@ environmentCoords obstacle::single_arm_stuck_center(robot_arm arm, deflectionDir
         neg_perpint_y = y_c - radius_m;
     }
 
-    cout << "negperpint y: " <<  neg_perpint_y << ", posperpint y: " << pos_perpint_y << endl;
+    if (debug_m) {
+        cout << "IN STUCK CENTER FUNCTION: the arm coordinate given here is (" << arm.get_x() << "," << arm.get_y() << endl;
+        cout << "THE SLOPE OF THE ARM IS: " << m << " and the start point is: (" << start_pt.x  << ',' << start_pt.y << ')' << endl;
+        cout << "negperpint y: " <<  neg_perpint_y << ", posperpint y: " << pos_perpint_y << endl;
+    }
+
     environmentCoords arc_mid_point; 
     if (deflection_direction == obs_above) {
         // if the obstacle was to deflect above you want to move the lower point up 
@@ -473,7 +477,6 @@ environmentCoords obstacle::single_arm_deformed_center(robot_arm arm, deflection
     environmentCoords proposed_center;
     // store the stuck center in deflected_center 
     proposed_center = single_arm_stuck_center(arm, deflection_direction);
-    cout << "The STUCK CENTER to arm is (" << proposed_center.x << "," << proposed_center.y << ")" << endl;
 
     environmentCoords deflected_center;
     deflected_center.x = proposed_center.x;
@@ -497,7 +500,11 @@ environmentCoords obstacle::single_arm_deformed_center(robot_arm arm, deflection
     if (OBSTACLE_LIMIT_FLAG_g) {
         error = (deflected_center.y < radius_m || deflected_center.y > ENV_HEIGHT_g - radius_m);
     }
-    cout << "The RETURNED DEFLECTED CENTER to arm is (" << deflected_center.x << "," << deflected_center.y << ")" << endl;
+
+    if (debug_m) {
+        cout << "The STUCK CENTER to arm is (" << proposed_center.x << "," << proposed_center.y << ")" << endl;
+        cout << "The RETURNED DEFLECTED CENTER to arm is (" << deflected_center.x << "," << deflected_center.y << ")" << endl;
+    }
     
     return deflected_center;
 }
@@ -575,20 +582,19 @@ void obstacle::step_to_deformed_center( const robot_arm arms[], bool &error, flo
     old_center_m.x = center_m.x;
     old_center_m.y = center_m.y;
 
-    cout << endl << endl;
-    cout << "In function OBSTACLE STEP TO DEFORMED CENTER " << endl;
-    cout << "Finding each deformed center" << endl;
     environmentCoords proposed_center;
     float all_proposed_ys[NUM_ROBOT_ARMS_g];
     bool temp_error = false;
     
     for (int i = 0; i < NUM_ROBOT_ARMS_g; i++) {
         //proposed_center = single_arm_stuck_center(arms[i], deflection_directions[i]);
-        //cout << "IN STEP: The STUCK CENTER to arm indexed at: " << i << " is (" << proposed_center.x << "," << proposed_center.y << ")" << endl;
         proposed_center = single_arm_deformed_center(arms[i], deflection_directions_m[i], temp_error);
         error = temp_error;
-        cout << "IN STEP: The INITIAL DEFORMED CENTER to arm indexed at: " << i << " is (" << proposed_center.x << "," << proposed_center.y << ")" << endl;
-        cout << endl << endl;
+
+        if (debug_m) {
+            cout << "IN STEP: The INITIAL DEFORMED CENTER to arm indexed at: " << i << " is (" << proposed_center.x << "," << proposed_center.y << ")" << endl;
+            cout << endl << endl;
+        }
         
         all_proposed_ys[i] = proposed_center.y;
         if (error) {
@@ -632,21 +638,22 @@ void obstacle::step_to_deformed_center( const robot_arm arms[], bool &error, flo
         }
     }
 
-    cout << "Checking for a collision with the arms" << endl;
     // check for a collision
     for (int i = 0; i < NUM_ROBOT_ARMS_g; i++) {
         error = is_collision(arms[i], deflection_directions_m[i], deflected_center);
         if (error) {
-            cout << "FOUND COLLISION WITH ARM indexed at: " << i << endl << endl;
             cost = OBSTACLE_ERROR_COST;
             state_rollback();
             return;
         } 
     }
-    cout << "In end of OBSTACLE STEP" << endl;
-    cout << "CURRENT CENTER: (" << center_m.x  << "," << center_m.y << ")" << endl;
-    cout << "DEFLECTED CENTER: (" << deflected_center.x << "," << deflected_center.y << ")" << endl;
-    cout << endl << endl;
+
+    if (debug_m) {
+        cout << "In end of OBSTACLE STEP" << endl;
+        cout << "CURRENT CENTER: (" << center_m.x  << "," << center_m.y << ")" << endl;
+        cout << "DEFLECTED CENTER: (" << deflected_center.x << "," << deflected_center.y << ")" << endl;
+        cout << endl << endl;
+    }
     center_m = deflected_center;
     cost = deformation_cost();
     return;
