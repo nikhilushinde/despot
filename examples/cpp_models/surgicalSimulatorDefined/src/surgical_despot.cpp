@@ -9,6 +9,7 @@
 
 
 #include "surgical_despot.h"
+#include <math.h> // ceil
 
 using std::cerr;
 using std::cout;
@@ -16,6 +17,84 @@ using std::endl;
 using std::vector; 
 
 namespace despot {
+
+/*
+* ***********************************************************************************
+* Tag Default Policy class: to get a LOWER BOUND in  DESPOT. 
+* ***********************************************************************************
+*/
+
+
+/*
+* ***********************************************************************************
+* Euclidean distance based UPPER bound class
+* ***********************************************************************************
+*/
+class SurgicalDespotEuclideanUpperBound: public ParticleUpperBound, public BeliefUpperBound {
+/*
+* This class creates an upper bound on the reward for the environment using the metric of Euclidean 
+* distance of the first arm from the goal coordinate minus the goal radius and the potential number 
+* of steps it would take to get there. 
+*/
+protected: 
+    const SurgicalDespot *surgicalDespot_m; // pointer to DSPOMDP model of SurgicalDespot
+public: 
+    SurgicalDespotEuclideanUpperBound(const SurgicalDespot *model): surgicalDespot_m(model){
+        /*
+        * Constructor for the manhattan distances based upper bound class
+        */ 
+        cout << "Creating the EUCLIDEAN UPPER BOUND" << endl;
+    }
+
+    double EuclideanDistanceCalc(const environment &environment_state) const {
+        /*
+        * Utility function used to find the Euclidean distance from the first arm of the robot to the goal coordinate minus the goal radius
+        */ 
+        robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
+        environmentCoords env_state_goal_coord;
+        environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
+
+        float x = static_cast<float>(env_state_robot_coords[0].x);
+        float y = static_cast<float>(env_state_robot_coords[0].y);
+
+        env_state_goal_coord = environment_state.get_goal_coord();
+
+        return static_cast<double>(sqrt(pow(x - env_state_goal_coord.x, 2) + pow(y - env_state_goal_coord.y, 2))) 
+            - static_cast<double>(environment_state.get_goal_radius());
+    }
+
+    using ParticleUpperBound::Value; 
+    double Value(const State &s) const{
+        const environment* environment_state = static_cast<const environment*>(&s);
+        double dist = EuclideanDistanceCalc(*environment_state);
+        int steps_to_goal = ceil(dist/XY_STEP_SIZE_g);
+        double discountedValue = -(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount())
+				+ TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+        return discountedValue;
+    }
+
+    using BeliefUpperBound::Value;
+    double Value(const Belief* belief) const {
+        const vector<State*>& particles = static_cast<const ParticleBelief*>(belief)->particles();
+        double totalValue = 0;
+
+        State *particle;
+        const environment *environment_state;
+        
+        double dist, discountedValue;
+        for (int i = 0; i < particles.size(); i++) {
+            particle = particles[i];
+            environment_state = static_cast<const environment*>(particle);
+            
+            dist = EuclideanDistanceCalc(*environment_state);
+            int steps_to_goal = ceil(dist/XY_STEP_SIZE_g);
+            double discountedValue = -(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount())
+				+ TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+            totalValue += discountedValue;
+        }
+        return totalValue;
+    }
+};
 
 /*
 * ***********************************************************************************
@@ -104,7 +183,7 @@ bool SurgicalDespot::Step(State& state, double rand_num, ACT_TYPE action, double
     bool at_terminal_state = false;
     if (environment_state->at_goal()) {
         at_terminal_state = true;
-        reward = TERMINAL_REWARD - step_cost;
+        reward = TERMINAL_REWARD_g - step_cost;
     } else {
         reward = 0 - step_cost;
     }
@@ -246,6 +325,56 @@ int SurgicalDespot::NumActiveParticles() const{
 * Bounding Functions for heuristic search
 * ***********************************************************************************
 */
+
+double SurgicalDespot::GetMaxReward() const {
+    /*
+    * Returns the maximum possible reward value achievable. 
+    */ 
+    return TERMINAL_REWARD_g;
+}
+
+ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, std::string particle_bound_name) const{
+    /*
+    * Create the Upper Bound for the TagNikhil class. 
+    */ 
+    if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
+        return new SurgicalDespotEuclideanUpperBound(this);
+    } else {
+        cerr << "Specified Upper Bound: " << name << " is NOT SUPPORTED!" << endl;
+        exit(1);
+    }
+}
+
+ValuedAction SurgicalDespot::GetBestAction() const {
+    /*
+    * This function returns the best action to be taken given nothing. This action is used to calculate the 
+    * trivial lower bound after the number of random number in the stream expires. 
+    */ 
+    if (USE_CONSTANT_MOVEMENT_COST_g) {
+        return ValuedAction(xRight, CONSTANT_MOVEMENT_COST_g);  // just moves the first arm  to the right
+    } else {
+        return ValuedAction(xRight, XY_STEP_SIZE_g);
+    }
+}
+
+ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string particle_bound_name) const{
+    /*
+    * Creates the lower bound for the TagNikhil class. 
+    */ 
+    const DSPOMDP *model = this;
+    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SHR") {
+        // Use the smart history based default rollout policy to create the lower bound
+        //return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
+        // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
+        cerr << "Finish creating lower bound" << endl;
+        exit(1);
+        // TODO: FINISH THIS 
+    } else {
+        cerr << "Specified Lower Bound " << name << " is NOT SUPPORTED!";
+        exit(1);
+    }
+}
+
 
 
 /*

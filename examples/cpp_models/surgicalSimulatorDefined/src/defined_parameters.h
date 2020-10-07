@@ -107,7 +107,7 @@ static const bool USE_CONSTANT_MOVEMENT_COST_g = false; // defines if the cost o
 #define MOVEMENT_ERROR 10000000 // cost for taking an action that resulted in an out of bounds error or collision error 
 #define ROBOT_MOVEMENT_ERROR_COST MOVEMENT_ERROR  // constant cost to return if there was an error in the robot movement 
 static const float OBSTACLE_ERROR_COST = MOVEMENT_ERROR; //define constant cost for error in obstacle manipulation
-#define TERMINAL_REWARD 1000000000
+#define TERMINAL_REWARD_g 1000000000
 
 /*
 NOTE: WHAT ATTRIBUTES TO DELETE FROM OBJECTS AND REPLACE WITH THESE PARAMETERS
