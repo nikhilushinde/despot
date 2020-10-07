@@ -6,10 +6,6 @@
 */
 #include "environment.h"
 
-// TODO: REMOVE THIS
-#include <numeric>
-using std::accumulate;
-
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -202,8 +198,6 @@ bool environment::init_environment(int height, int length, environmentCoords goa
     if (error) {
         return error;
     }
-
-    cout << "Initialized the robot in the environment" << endl;
 
     // obstacle associated attributes
     this->obstacle_limit_m = obstacle_limit;
@@ -500,36 +494,6 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
                 exit(1);
             }
             class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB;
-            // TODO: REMOVE THIS!!!!
-            /*
-            float total_prob = 0;
-            accumulate(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, total_prob);
-            if (total_prob != 1) {
-                cout << "Observable obstacles array: ";
-                for (int i = 0; i < NUM_OBSTACLES_g; i++) {
-                    cout << class_observable_obstacles_m[i] << ", ";
-                }
-                cout << endl;
-
-                cout << "True class probability: " << TRUE_CLASS_OBSERVATION_PROB << endl;
-                cout << "other class probaiblity: " << other_class_probability << endl;
-                cout << "True obstacle k: " << obstacles_m[obs_num].get_k() << endl;
-                cout << "true class index: " << true_k_index << endl;
-                cout << "The obstacle index is: " << obs_num << endl;
-                cout << "The probability array: ";
-                float total = 0;
-                for (int i = 0; i < NUM_OBS_K_CLASSES_g; i++) {
-                    cout << class_probability_distrib[i] << ", ";
-                    total += class_probability_distrib[i];
-                }
-                cout << endl;
-                cout << "total probability is: " << total << endl;
-                cout << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
-                cerr << "ERROR: IN observe_classes: the total probability of viewing the classes is not 1, it is: " << total_prob << endl;
-                exit(1);
-            }
-            */
-            // END: TODO: REMOVE THIS!!!!
 
             sampledRandomNum = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
             sampled_obs_k_index = randomNumToInt(class_probability_distrib, NUM_OBS_K_CLASSES_g, sampledRandomNum);
@@ -679,7 +643,9 @@ void environment::step(const robotArmActions *actions, bool &error, float &cost)
     robObj_m.step(actions, xy_step_size_m, theta_deg_step_size_m, error, temp_cost);
     cost += temp_cost;
     if (error) {
-        cout << "ERROR: error occurred in ROBOT object step" << endl;
+        if (debug_m) {
+            cout << "ERROR: error occurred in ROBOT object step" << endl;
+        }
         return;
     }
 
@@ -707,7 +673,9 @@ void environment::step(const robotArmActions *actions, bool &error, float &cost)
                 obstacles_m[rollback_idx].state_rollback();
             }
             robObj_m.state_rollback();
-            cout << "ERROR: error occurred after robot stepped and while the OBSTACLES were being stepped" << endl; 
+            if (debug_m) {
+                cout << "ERROR: error occurred after robot stepped and while the OBSTACLES were being stepped" << endl; 
+            }
             return;
         }
     }
@@ -761,6 +729,11 @@ void environment::printState() const{
         obstacles_m[i].printState();
         cout << endl;
     }
+    cout << "Observable obstacles: ";
+    for (int i = 0; i < num_obstacles_m; i++) {
+        cout << class_observable_obstacles_m[i] << ", ";
+    }
+    cout << endl;
     robotArmCoords camera_coords = cam_m.get_camera_coords();
     cout << "Camera coordinates: " << camera_coords.x << "," << camera_coords.y  << endl;
     cout << "camera max distance: " << cam_m.get_max_distance() << endl; 
