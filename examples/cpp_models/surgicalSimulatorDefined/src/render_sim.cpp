@@ -26,6 +26,7 @@ render_sim::render_sim() {
     * after this to properly initialize the environment
     */
     window_name_m = RENDER_SIM_WINDOW_NAME;
+    debug_m = DEFAULT_DEBUG_FLAG_g;
 }
 
 render_sim::render_sim(const render_sim &render_sim_to_copy) {
@@ -37,6 +38,7 @@ render_sim::render_sim(const render_sim &render_sim_to_copy) {
 
     // just keep the same window name as normal initialization - have that be the only allowable window name for this class
     window_name_m = RENDER_SIM_WINDOW_NAME;
+    debug_m = render_sim_to_copy.debug_m;
 }
 
 void render_sim::render_arm(const robot_arm &arm) const{
@@ -171,8 +173,10 @@ void render_sim::render_environment(const environment &env) const{
     circle(image, goalPoint, centerRadius, goal_color, fill_thickness);
     circle(image, goalPoint, goal_radius, goal_color, region_line_thickness);
 
-    // display all the camera points
-    std::cout << "the number of scan angles in the first render is: " << env.get_cam_num_scan_angles() << std::endl;
+    if (debug_m) {
+        // display all the camera points
+        std::cout << "the number of scan angles in the first render is: " << env.get_cam_num_scan_angles() << std::endl;
+    }
 
     cameraIntersectionPoint intersection_points[env.get_cam_num_scan_angles()];
     env.observe_points(intersection_points, env.get_cam_num_scan_angles());
@@ -201,12 +205,17 @@ void render_sim::render_environment(const environment &env) const{
             }
             scan_point = Point((int) intersection_points[i].x, (int) intersection_points[i].y);
             circle(image, scan_point, scan_radius, scan_color, fill_thickness);
-            std::cout << "Drawing scan circle at:" << intersection_points[i].x << "," << intersection_points[i].y << std::endl;
+
+            if (debug_m) {
+                std::cout << "Drawing scan circle at:" << intersection_points[i].x << "," << intersection_points[i].y << std::endl;
+            }
 
         }
     }
 
-    std::cout << "TOTAL SCAN CIRCLES: " << circle_count << std::endl;
+    if (debug_m) {
+        std::cout << "TOTAL SCAN CIRCLES: " << circle_count << std::endl;
+    }
 
     // get the flipped image
     int flipDirection = 0; // 0 - means flip vertically

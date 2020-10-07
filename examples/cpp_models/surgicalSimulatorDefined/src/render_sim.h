@@ -30,6 +30,8 @@ public:
 
 private:
     string window_name_m;
+
+    bool debug_m; // boolean debug flag
 };
 } // end namespace despot
 
