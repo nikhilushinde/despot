@@ -148,6 +148,186 @@ public:
 
 /*
 * ***********************************************************************************
+* Default Policy class: to get a LOWER BOUND in  DESPOT. 
+* ***********************************************************************************
+*/
+class SurgicalDespotCloserHistoryPolicy: public DefaultPolicy {
+/*
+* This is a history based rollout policy to get the lower bounds for the environment in DESPOT
+* Policy methodology: 
+*   - If there is no history take a random action that does not run into walls. If there is a history
+*   take actions that do not double back on the last action. 
+*   - When selecting the random action: select actions that lead you closer to the  goal coordinate
+*   in the environment with some probability and select actions completely at random with some other probability
+*/
+private:
+    const SurgicalDespot *surgicalDespot_m; // pointer to the SurgicalDespot 
+    double probability_to_move_closer;
+public:
+    SurgicalDespotCloserHistoryPolicy(const DSPOMDP* model, ParticleLowerBound* bound):
+    DefaultPolicy(model, bound) {
+        /*
+        * Constructor to initialize the History based default policy
+        * args:
+        *   - model: DSPOMDP model - SurgicalDespot
+        *   - bound: a particle lower bound to use after the finite random number streams used when the default policy runs out
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+        probability_to_move_closer = 0.8;
+    }
+
+    bool isFeasibleAction(int action_num, environment& environment_state) const {
+        /*
+        * Returns if the specified action number is feasible: in regards that it does not cause 
+        * the robot arms to go out of bounds. 
+        * 
+        * NOTE: Does not check for obstacle related collisions as those may be different in different particles
+        */ 
+        robotArmActions action_array[NUM_ROBOT_ARMS_g];
+        // convert the integer to actions
+        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+
+        bool error; 
+        float cost;
+        environment_state.robObj_m.step(action_array, XY_STEP_SIZE_g, THETA_DEG_STEP_SIZE_g, error, cost);
+        
+        // if error robot object auto rollbacks - else we roll it back ourself
+        if (error) {
+            return false;
+        } else {
+            environment_state.robObj_m.state_rollback();
+            return true;
+        }
+    }
+
+    bool isReverseAction(ACT_TYPE act1, ACT_TYPE act2) const {
+        /*
+        * checks if act2 undoes the effects of act1
+        * returns:
+        *   - boolean: true if the act1 reverses act2 else false
+        */ 
+        robotArmActions act_array1[NUM_ROBOT_ARMS_g];
+        robotArmActions act_array2[NUM_ROBOT_ARMS_g];
+
+        surgicalDespot_m->IntToActions(act1, act_array1, NUM_ROBOT_ARMS_g);
+        surgicalDespot_m->IntToActions(act2, act_array2, NUM_ROBOT_ARMS_g);
+
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
+            if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
+            (act_array2[arm_num] == stay && act_array1[arm_num] != stay )) {
+                return false;
+            } 
+            bool isReverse = ((act_array1[arm_num] == xRight && act_array2[arm_num] == xLeft) ||
+                (act_array1[arm_num] == xLeft && act_array2[arm_num] == xRight) ||
+                (act_array1[arm_num] == yUp && act_array2[arm_num] == yDown) ||
+                (act_array1[arm_num] == yDown && act_array2[arm_num] == yUp) ||
+                (act_array1[arm_num] == thetaUp && act_array2[arm_num] == thetaDown) ||
+                (act_array1[arm_num] == thetaDown && act_array2[arm_num] == thetaUp));
+            return isReverse; // return immediately as only 1 non stay action. 
+        }
+
+        return false;
+
+    }
+
+    bool isTowardsGoal(int action_num, const environment& environment_state) const{
+        /*
+        * Returns true if the action brings the robot closer to the goal and false otherwise
+        */ 
+        robotArmActions action_array[NUM_ROBOT_ARMS_g];
+        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+        robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
+        environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
+        environmentCoords goal_coords;
+        goal_coords = environment_state.get_goal_coord();
+
+        bool goalToRight; // boolean indicator - true if goal to the right of arm 
+        bool goalToTop; // boolean indicator - true if goal above arm 
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+            if (action_array[arm_num] == stay) {
+                continue;
+            } else {
+                goalToRight = env_state_robot_coords[arm_num].x < goal_coords.x;
+                goalToTop = env_state_robot_coords[arm_num].y < goal_coords.y;
+
+                if (goalToRight && action_array[arm_num] == xRight) {
+                    return true;
+                }  else if (!goalToRight && action_array[arm_num] == xLeft) {
+                    return true;
+                }
+
+                if (goalToTop && action_array[arm_num] == yUp) {
+                    return true;
+                } else if (!goalToTop && action_array[arm_num] == yDown) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    ACT_TYPE Action(const vector<State*>& particles, RandomStreams &streams, History& history) const{
+        /*
+        * This function returns the action to take when using this history based policy. The action
+        * is based on the current belief particles, a stream of random numbers that indicate the scenarios
+        * and the history of actions that has been taken. 
+        * returns:
+        *   - action that should be taken
+        * 
+        * Methodlogy: described above
+        * NOTE: this policy only moves the first/0th indexed arm
+        */
+       
+        // Since all environments have the same robot location - just use the robot location in a particle
+        robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
+        const environment* environment_state = static_cast<const environment *>(particles[0]);
+        // create a copy of the environment to get valid arm actions
+        environment cpy_environment_state = environment(*environment_state);
+        
+        vector <ACT_TYPE> feasible_actions;
+        vector <ACT_TYPE> towards_goal_feasible_actions;
+
+        // If the history is empty then take a random move that does not run into the wall
+        if (history.Size() == 0) {
+            for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                if (isFeasibleAction(action_num, cpy_environment_state)) {
+                    feasible_actions.push_back(action_num);
+                    if (isTowardsGoal(action_num, cpy_environment_state)) {
+                        towards_goal_feasible_actions.push_back(action_num);
+                    }
+                }
+            }
+        } else {
+            for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                if (isFeasibleAction(action_num, cpy_environment_state) && 
+                !isReverseAction(action_num, history.LastAction())) {
+                    feasible_actions.push_back(action_num);
+                    if (isTowardsGoal(action_num, cpy_environment_state)) {
+                        towards_goal_feasible_actions.push_back(action_num);
+                    }
+                }
+            }
+        }
+        
+        
+        if (feasible_actions.size() == 0) {
+            cerr << "ERROR: in the lower bound policy action - should always have some feasible actions" << endl;
+            exit(1);
+        }
+
+        double rand_num = Random::RANDOM.NextDouble(0, 1);
+        if (rand_num < probability_to_move_closer && towards_goal_feasible_actions.size() > 0) {
+            return towards_goal_feasible_actions[Random::RANDOM.NextInt(towards_goal_feasible_actions.size())];
+        }
+        int ret_feasible_action_index = Random::RANDOM.NextInt(feasible_actions.size());
+        return feasible_actions[ret_feasible_action_index];
+    }   
+};
+
+
+/*
+* ***********************************************************************************
 * Euclidean distance based UPPER bound class
 * ***********************************************************************************
 */
@@ -501,10 +681,13 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
     * Creates the lower bound for the TagNikhil class. 
     */ 
     const DSPOMDP *model = this;
-    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SHR") {
+    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SCHR") {
         // Use the smart history based default rollout policy to create the lower bound
         //return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
+        cout << "Create closer history policy based lower bound" << endl;
+        return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
+    } else if (name == "SHR") {
         return new SurgicalDespotHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
     } else {
         cerr << "Specified Lower Bound " << name << " is NOT SUPPORTED!";
