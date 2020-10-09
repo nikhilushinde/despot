@@ -1,6 +1,8 @@
 #include <despot/planner.h>
 #include "surgical_despot.h"
 
+/* main file to run the despot algorithm */
+
 using namespace despot;
 
 class MyPlanner: public Planner {
