@@ -73,6 +73,8 @@ if(DESPOT_BUILD_EXAMPLES)
   add_subdirectory(examples/cpp_models/simple_rock_sample)
   add_subdirectory(examples/cpp_models/tag)
   add_subdirectory(examples/cpp_models/tiger)
+  add_subdirectory(examples/cpp_models/tag_nikhil)
+  add_subdirectory(examples/cpp_models/surgicalSimulatorDefined)
 endif()
 
 if(DESPOT_BUILD_POMDPX)
