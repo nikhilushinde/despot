@@ -14,6 +14,7 @@
 #include "robot.h"
 #include "obstacle.h"
 #include "camera.h"
+#include <climits>
 
 namespace despot {
 
