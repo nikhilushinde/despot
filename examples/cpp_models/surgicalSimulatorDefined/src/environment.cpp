@@ -47,7 +47,7 @@ environment::environment() {
     bool error = init_environment(ENV_HEIGHT_g, ENV_LENGTH_g, goal_coord, GOAL_RADIUS_g, XY_STEP_SIZE_g, THETA_DEG_STEP_SIZE_g, 
     NUM_ROBOT_ARMS_g, robot_arm_start_coords, OBSTACLE_LIMIT_FLAG_g, OBSTACLE_RADIUS_g, NUM_OBSTACLES_g, all_obstacle_ks_g, 
     all_obstacle_center_x_g, all_obstacle_center_y_g, all_initial_deflection_directions, CAM_CORRESPONDING_ARM_IDX_g, CAM_FOV_DEG_g, 
-    CAM_ANGLE_RESOLUTION_DEG_g, CAM_MAX_DISTANCE_g);
+    CAM_ANGLE_RESOLUTION_DEG_g, CAM_MAX_DISTANCE_g, DEFAULT_DEBUG_FLAG_g);
 
     if (error) {
         cerr << "There was an error in initializing the environment with the default parameters in the defined parameters file" << endl;
@@ -151,7 +151,7 @@ bool environment::init_environment(int height, int length, environmentCoords goa
         int theta_deg_step_size, int num_robot_arms, const robotArmCoords *robot_arm_start_coords, bool obstacle_limit, 
         int obstacle_radius, int num_obstacles, const float *obstacle_ks, const float *obstacle_center_x, const float *obstacle_center_y, 
         const deflectionDirection deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g], int cam_corresponding_arm_index, int cam_fov_degrees, int cam_angle_resolution_deg, 
-        int cam_max_distance) {
+        int cam_max_distance, bool debug) {
     /*
     * Initializes the environment object completely 
     * args:
@@ -169,12 +169,18 @@ bool environment::init_environment(int height, int length, environmentCoords goa
     *   - deflection_directions: list of lists of the initial deflection directions to use while initializing the obstacles
     *       - outer list dimension: num_obstacles
     *       - inner list dimension: num_robot_arms
+    *   - cam_corresponding_arm_index: the index of the robot arm that the camera corresponds to
+    *   - cam_fov_degrees: the field of view of the camera arm in degrees
+    *   - cam_max_distance: the maximum distance that the camera rays can get a reading from.  
     * returns:
     *   - error: true if there was an error while initializing the environment
     * 
     * NOTE: If there is an error delete all dynamically allocated lists and return - no guarantees on any of the 
     * obstacle attribute values so you have to reinitialize. 
     */ 
+    debug_m = debug; // autoset the debug flag for the environment
+
+
     bool error = false;
     error = cam_corresponding_arm_index < num_robot_arms;
 

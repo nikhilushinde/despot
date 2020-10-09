@@ -50,7 +50,7 @@ public:
         int theta_deg_step_size, int num_robot_arms, const robotArmCoords *robot_arm_start_coords, bool obstacle_limit, 
         int obstacle_radius, int num_obstacles, const float *obstacle_ks, const float *obstacle_center_x, const float *obstacle_center_y, 
         const deflectionDirection deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g], int cam_corresponding_arm_index, int cam_fov_degrees, int cam_angle_resolution_deg, 
-        int cam_max_distance); // initialize the environment after calling the default constructor
+        int cam_max_distance, bool debug); // initialize the environment after calling the default constructor
     void init_state(environmentState x); // initialize the environment by by setting the environment's robot and obstacles to this environment
     
     // get state
