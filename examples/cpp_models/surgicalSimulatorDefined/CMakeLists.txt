@@ -23,8 +23,8 @@ add_executable("${PROJECT_NAME}_surgicalSimulator"
   src/camera.cpp
   src/render_sim.cpp
   src/surgical_utils.cpp
-  src/main.cpp
-  #src/test_environment_simulator_renderer.cpp
+  #src/main.cpp
+  src/test_environment_simulator_renderer.cpp
 )
 
 # tell it to link the executable target against OpenCV

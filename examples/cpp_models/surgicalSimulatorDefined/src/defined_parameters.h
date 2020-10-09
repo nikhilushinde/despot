@@ -40,7 +40,7 @@ enum deflectionDirection {
 #define GOAL_X_g 100 // x coordinate of the goal location 
 #define GOAL_Y_g 100 // y coordinate of the goal location
 #define GOAL_RADIUS_g 30 // radius of goal location centered at (GOAL_X_g, GOAL_Y_g)
-#define XY_STEP_SIZE_g 20 // size of the x,y steps that the robot arm can take 
+#define XY_STEP_SIZE_g 5 // size of the x,y steps that the robot arm can take 
 #define THETA_DEG_STEP_SIZE_g 5 // size of the theta step size in degrees
 
 #define DEFAULT_DEBUG_FLAG_g false // set the  debug flag for all the objects in the environment

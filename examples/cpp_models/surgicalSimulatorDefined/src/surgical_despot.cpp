@@ -536,14 +536,16 @@ State* SurgicalDespot::CreateStartState(std::string type) const {
     double uniform_probability = 1.0/static_cast<double>(NUM_OBS_K_CLASSES_g);
     std::fill(probabilityDistrib, probabilityDistrib + NUM_OBS_K_CLASSES_g, uniform_probability);
 
+    environment *new_env = new environment();
+
+    /*
     for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
         rand_num = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
         current_obs_k_index = random_number_to_index(probabilityDistrib, NUM_OBS_K_CLASSES_g, rand_num);
         init_obstacle_ks[obs_num] = all_possible_obs_ks_g[current_obs_k_index];
     }
-
-    environment *new_env = new environment();
     new_env->set_obstacle_ks(init_obstacle_ks);
+    */
 
     cout << "Created start state with initial obstacle ks: ";
     for (int i = 0; i < NUM_OBSTACLES_g; i++) {
