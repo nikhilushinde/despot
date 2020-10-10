@@ -811,4 +811,81 @@ void environment::printState() const{
 * ********************************************************************************
 */
 
+// for creating a map
+bool environment::operator<(const environment &other_env) const {
+    /*
+    * boolean compare operator for maps that dictates if the second object is "bigger" than the first
+    * returns:
+    *   - true if the second object is  bigger in any way else returns false
+    */ 
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
+        if (robObj_m.arms_m[arm_num].get_x() < other_env.robObj_m.arms_m[arm_num].get_x()) {
+            return true;
+        } else if (robObj_m.arms_m[arm_num].get_y() < other_env.robObj_m.arms_m[arm_num].get_y()) {
+            return true;
+        } else if (robObj_m.arms_m[arm_num].get_theta_degrees() < other_env.robObj_m.arms_m[arm_num].get_theta_degrees()) {
+            return true;
+        }
+    }
+
+    // go through the obstacle k values
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num ++) {
+        if (obstacles_m[obs_num].get_k() < other_env.obstacles_m[obs_num].get_k()) {
+            return true;
+        }
+
+        // go through the obstacle deflection directions
+        deflectionDirection this_obs_deflection_dirs[NUM_ROBOT_ARMS_g];
+        deflectionDirection other_obs_deflection_dirs[NUM_ROBOT_ARMS_g];
+
+        obstacles_m[obs_num].get_deflection_directions(this_obs_deflection_dirs, NUM_ROBOT_ARMS_g);
+        other_env.obstacles_m[obs_num].get_deflection_directions(other_obs_deflection_dirs, NUM_ROBOT_ARMS_g);
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+            if (this_obs_deflection_dirs[arm_num] < other_obs_deflection_dirs[arm_num]) {
+                return true;
+            }
+        }
+    } 
+
+    return false;
+}
+
+bool environment::operator==(const environment &other_env) const {
+    /*
+    * boolean compare operator for maps that compares 2 environment objects and sees if they are the same
+    * returns:
+    *   - true if the 2 environments are the same else returns false. 
+    */ 
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
+        if (robObj_m.arms_m[arm_num].get_x() != other_env.robObj_m.arms_m[arm_num].get_x()) {
+            return false;
+        } else if (robObj_m.arms_m[arm_num].get_y() != other_env.robObj_m.arms_m[arm_num].get_y()) {
+            return false;
+        } else if (robObj_m.arms_m[arm_num].get_theta_degrees() != other_env.robObj_m.arms_m[arm_num].get_theta_degrees()) {
+            return false;
+        }
+    }
+
+    // go through the obstacle k values
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num ++) {
+        if (obstacles_m[obs_num].get_k() != other_env.obstacles_m[obs_num].get_k()) {
+            return false;
+        }
+
+        // go through the obstacle deflection directions
+        deflectionDirection this_obs_deflection_dirs[NUM_ROBOT_ARMS_g];
+        deflectionDirection other_obs_deflection_dirs[NUM_ROBOT_ARMS_g];
+
+        obstacles_m[obs_num].get_deflection_directions(this_obs_deflection_dirs, NUM_ROBOT_ARMS_g);
+        other_env.obstacles_m[obs_num].get_deflection_directions(other_obs_deflection_dirs, NUM_ROBOT_ARMS_g);
+        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+            if (this_obs_deflection_dirs[arm_num] != other_obs_deflection_dirs[arm_num]) {
+                return false;
+            }
+        }
+    } 
+
+    return true;
+}
+
 } // end namespace despot

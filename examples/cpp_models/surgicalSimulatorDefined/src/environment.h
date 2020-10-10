@@ -93,6 +93,10 @@ public:
     bool at_goal() const; // checks if the environment is in a goal state
     void printState() const; // print the state of the environment
 
+    // for map creation
+    bool operator<(const environment &other_env) const; 
+    bool operator==(const environment &other_env) const;
+
 
     // variable attributes 
 
