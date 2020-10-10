@@ -3,7 +3,7 @@
 * the obstacles, robot (which contains the robot_arm objects). It is the overall simulator and interacts
 * with commands from the outside world. 
 *
-* The functions for this class are defined in the file environment.cpp
+* The functions for this class are defined in environment.cpp
 */
 
 #ifndef ENVIRONMENT_H

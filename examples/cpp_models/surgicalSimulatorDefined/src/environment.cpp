@@ -761,7 +761,7 @@ bool environment::reset() {
     bool error = init_environment(environment_height_m, environment_length_m, goal_coord_m, goal_radius_m, xy_step_size_m, theta_deg_step_size_m, 
     num_robot_arms_m, robot_arm_start_coords_m, obstacle_limit_m, obstacle_radius_m, num_obstacles_m, obstacle_ks_m, 
     obstacle_center_x_m, obstacle_center_y_m, init_deflection_directions_m, cam_m.get_corresponding_arm_index(), 
-    cam_m.get_fov_deg(), cam_m.get_angle_resolution_deg(), cam_m.get_max_distance());
+    cam_m.get_fov_deg(), cam_m.get_angle_resolution_deg(), cam_m.get_max_distance(), debug_m);
     return error;
 }
 
