@@ -818,20 +818,49 @@ bool environment::operator<(const environment &other_env) const {
     * returns:
     *   - true if the second object is  bigger in any way else returns false
     */ 
+    robotArmCoords robCoords, otherRobCoords;
     for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
-        if (robObj_m.arms_m[arm_num].get_x() < other_env.robObj_m.arms_m[arm_num].get_x()) {
+        robCoords = robObj_m.arms_m[arm_num].get_coords();
+        otherRobCoords = other_env.robObj_m.arms_m[arm_num].get_coords();
+
+        // must explicitly cover every case
+        if (robCoords.x < otherRobCoords.x) {
             return true;
-        } else if (robObj_m.arms_m[arm_num].get_y() < other_env.robObj_m.arms_m[arm_num].get_y()) {
+        } else if (robCoords.x > otherRobCoords.x) {
+            return false;
+        } else if (robCoords.y < otherRobCoords.y) { // implicit that robCoords.x == otherRobCoords.x
             return true;
-        } else if (robObj_m.arms_m[arm_num].get_theta_degrees() < other_env.robObj_m.arms_m[arm_num].get_theta_degrees()) {
+        } else if (robCoords.y > otherRobCoords.y) {
+            return false;
+        } else if (robCoords.theta_degrees < otherRobCoords.theta_degrees) { // implicit that robCoords.x == otherRobCoords.x && robCoords.y == otherRobCoords.y
             return true;
+        } else if (robCoords.theta_degrees > otherRobCoords.theta_degrees) {
+            return false;
+        } else {
+            // ERROR CHECK: TODO: REMOVE THIS
+            if (!(robCoords.x == otherRobCoords.x && robCoords.y == otherRobCoords.y && robCoords.theta_degrees == otherRobCoords.theta_degrees)) {
+                cerr << "Error: the operator < function in environment class not working as expected: robot arm section" << endl;
+                exit(1);
+            }
+            continue; // continue to the next arm - this arm is the same
         }
     }
 
     // go through the obstacle k values
+    float obsK, otherObsK;
     for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num ++) {
-        if (obstacles_m[obs_num].get_k() < other_env.obstacles_m[obs_num].get_k()) {
+        obsK = obstacles_m[obs_num].get_k();
+        otherObsK = other_env.obstacles_m[obs_num].get_k();
+        if (obsK < otherObsK) {
             return true;
+        } else if (obsK > otherObsK) {
+            return false;
+        } else {
+            // ERROR CHECK: TODO: REMOVE THIS
+            if (!(obsK == otherObsK)) {
+                cerr << "Error: the operator < function in the environment class not working as expected: obstacle k section" << endl;
+                exit(1);
+            }
         }
 
         // go through the obstacle deflection directions
@@ -843,10 +872,19 @@ bool environment::operator<(const environment &other_env) const {
         for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
             if (this_obs_deflection_dirs[arm_num] < other_obs_deflection_dirs[arm_num]) {
                 return true;
+            } else if (this_obs_deflection_dirs[arm_num] > other_obs_deflection_dirs[arm_num]) {
+                return false;
+            } else {
+                // ERROR CHECK: TODO: REMOVE THIS
+                if (!(this_obs_deflection_dirs[arm_num] == other_obs_deflection_dirs[arm_num])) {
+                    cerr << "Error: the operator < function in the environment class not working as expected: obstacle deflection directions section" << endl;
+                    exit(1);
+                }
             }
         }
     } 
 
+    // since both the environments are the same return false
     return false;
 }
 
