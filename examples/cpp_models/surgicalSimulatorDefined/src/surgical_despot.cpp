@@ -383,6 +383,10 @@ public:
 
     using BeliefUpperBound::Value;
     double Value(const Belief* belief) const {
+        /*
+        * Methodology: For the value upper bound only consider the value of the terminal reward after the discounting
+        */ 
+
         const vector<State*>& particles = static_cast<const ParticleBelief*>(belief)->particles();
         double totalValue = 0;
 
