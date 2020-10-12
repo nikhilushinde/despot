@@ -37,7 +37,7 @@ enum deflectionDirection {
 */
 #define ENV_LENGTH_g 200 // environment length
 #define ENV_HEIGHT_g 200 // environment height
-#define GOAL_X_g 200 // x coordinate of the goal location 
+#define GOAL_X_g 100 // x coordinate of the goal location 
 #define GOAL_Y_g 200 // y coordinate of the goal location
 #define GOAL_RADIUS_g 30 // radius of goal location centered at (GOAL_X_g, GOAL_Y_g)
 #define XY_STEP_SIZE_g 5 // size of the x,y steps that the robot arm can take 
@@ -55,7 +55,7 @@ enum deflectionDirection {
 #define NUM_OBS_CenterY_CLASSES_g 5 // number of possible classes for the initial y positions of the obstacles
 #define OBSTACLE_LIMIT_FLAG_g false // boolean indicating if the obstacles are to be limited vertically by the environment
 static const float all_possible_obs_ks_g[NUM_OBS_K_CLASSES_g] = {0.001, 1, 10,  1000,  5000}; // values of all possible k 
-static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {10, 30, 100, 110, 150}; // values of all possible initial y centers of the obstacles
+static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {180, 30, 100, 110, 150}; // values of all possible initial y centers of the obstacles
 #define DEFAULT_NOTOBSERVED_OBS_K_g 0 // default value to use for obstacle k when the obstacle is not observed. - should not be contained in all_possible_obs_ks_g
 
 // used for obstacle initialization
@@ -63,7 +63,7 @@ static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {10, 30, 1
 //static const int all_obstacle_radiuses_g[NUM_OBSTACLES_g] = {30, 30, 30}; // the radiuses of each obstacle
 static const float all_obstacle_ks_g[NUM_OBSTACLES_g] = {1000, 10, 5000}; // the k value of each obstacle
 static const float all_obstacle_center_x_g[NUM_OBSTACLES_g] = {31, 91, 151}; // the x value of each obstacle
-static const float all_obstacle_center_y_g[NUM_OBSTACLES_g] = {100, 30, 110}; // the initial y value of each obstacle
+static const float all_obstacle_center_y_g[NUM_OBSTACLES_g] = {180, 150, 180}; // the initial y value of each obstacle
 
 // probability of observing the true obstacle class after interactions 
 #define TRUE_CLASS_OBSERVATION_PROB 0.9
