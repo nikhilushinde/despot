@@ -26,7 +26,7 @@ public:
 
     void render_arm(const robot_arm &arm) const; // render the robot arm in an environment
     void render_robot(const robot_arm arms[], int num_robot_arms) const; // render the robot - all arms - in the environment
-    void render_environment(const environment &env) const; // render the environment - all the robot arms and all the obstacles
+    void render_environment(const environment &env, int waitKeyTime = 10) const; // render the environment - all the robot arms and all the obstacles
 
 private:
     string window_name_m;

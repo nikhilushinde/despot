@@ -113,13 +113,14 @@ void render_sim::render_robot(const robot_arm arms[], int num_robot_arms) const{
     waitKey(10);
 }
 
-void render_sim::render_environment(const environment &env) const{
+void render_sim::render_environment(const environment &env, int waitKeyTime) const{
     /*
     * This function renders the entire enviornment which includes all the robot arms and all the obstacles
     * in a window with the window_name
     * 
     * args:
     *   - env: the environment object to render
+    *   - waitKeyTime: Default = 10: the default time to wait between renders of the environment
     */
     // require a flipped image as in opencv (0,0) is top left - we need to flip vertically to get correct image
     Mat image(ENV_HEIGHT_g, ENV_LENGTH_g, CV_8UC3, Scalar(255, 255, 255));
@@ -224,7 +225,7 @@ void render_sim::render_environment(const environment &env) const{
     // display the window
     namedWindow(window_name_m, WINDOW_AUTOSIZE);
     imshow(window_name_m, flippedImage);
-    waitKey(10);
+    waitKey(waitKeyTime);
 }
 
 } // end namespace despot
