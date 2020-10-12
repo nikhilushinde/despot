@@ -145,7 +145,7 @@ void astar_planner::plan_a_star(const environment &start_environment_state, bool
     * Does the entire A star planning algorithm.
     * args:
     *   - start_environment_state: the environment object indicating the starting state that a star plans from 
-    * 
+    *   - verbose: whether to print how many iterations have passed: defaults to false
     * Methodology:
     *   - Does A star planning - uses the cost as a metric to get the value of each state so the COST IS USED FOR THE VALUES not reward
     */

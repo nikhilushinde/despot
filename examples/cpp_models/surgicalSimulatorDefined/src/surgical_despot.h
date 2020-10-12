@@ -14,6 +14,9 @@
 #include "render_sim.h"
 #include "astar_planner.h"
 
+// for support for multi threading
+#include <thread>
+
 
 namespace despot {
 
@@ -22,9 +25,11 @@ class SurgicalDespot: public DSPOMDP {
 friend class SurgicalDespotHistoryPolicy;
 friend class SurgicalDespotCloserHistoryPolicy;
 friend class SurgicalDespotAstarPolicy;
+friend class SurgicalDespotAstarMultiThreadPolicy;
 
 friend class SurgicalDespotEuclideanUpperBound;
 friend class SurgicalDespotAstarUpperBound;
+friend class SurgicalDespotAstarMultiThreadUpperBound;
 
 protected:
     mutable MemoryPool<environment> memory_pool_;

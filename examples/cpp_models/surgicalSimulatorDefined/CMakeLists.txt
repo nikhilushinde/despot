@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 
+# to enable multi threading
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 # set the OpenCV_DIR variable equal to the path of previously installed opencv
-set(OpenCV_DIR /Users/nikhilushinde/anaconda3)
+set(OpenCV_DIR /Users/nikhilushinde/anaconda3/envs/cv_env)
 
 # configure the necessary common CMake environment variables
 # needed to include and link the OpenCV program into this
@@ -23,8 +26,12 @@ add_executable("${PROJECT_NAME}_surgicalSimulator"
   src/camera.cpp
   src/render_sim.cpp
   src/surgical_utils.cpp
-  #src/main.cpp
-  src/test_environment_simulator_renderer.cpp
+  src/pq_dict.cpp
+  src/astar_planner.cpp
+  #src/test_a_star.cpp
+  #src/test.cpp
+  src/main.cpp
+  #src/test_environment_simulator_renderer.cpp
 )
 
 # tell it to link the executable target against OpenCV
