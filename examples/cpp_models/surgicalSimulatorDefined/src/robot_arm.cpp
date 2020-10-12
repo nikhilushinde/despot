@@ -279,7 +279,7 @@ void robot_arm::step(robotArmActions action, int xy_step_size, int theta_deg_ste
     int delta_x;
     int delta_y;
     int delta_theta_degrees;
-    action_to_movements(action, xy_step_size, theta_deg_step_size, delta_x, delta_y, delta_theta_degrees);
+    action_to_movements_g(action, xy_step_size, theta_deg_step_size, delta_x, delta_y, delta_theta_degrees);
 
     // populate the old_coords before evolving coords state in case of a rollback 
     old_coords_m = coords_m;

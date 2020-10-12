@@ -447,7 +447,7 @@ int environment::randomNumToInt(const double probabilityDistrib[], int probabili
     }
     return ret_index;
     */
-    return random_number_to_index(probabilityDistrib, probabilityDistrib_size, randomNum);
+    return random_number_to_index_g(probabilityDistrib, probabilityDistrib_size, randomNum);
 }
 
 

@@ -245,7 +245,7 @@ void camera::get_arm_intersection_points(float scan_angle_deg, int num_robot_arm
             }
 
             // check that the intersection point is actually on the robot arm and not the extrapolated line
-            if ((intersect_x >= 0 || cmp_floats(intersect_x, 0.0)) && (intersect_x <= arms[arm_index].get_x() || cmp_floats(intersect_x, arms[arm_index].get_x())) ) {
+            if ((intersect_x >= 0 || cmp_floats_g(intersect_x, 0.0)) && (intersect_x <= arms[arm_index].get_x() || cmp_floats_g(intersect_x, arms[arm_index].get_x())) ) {
                 // handle 90 and -90 degree angles appropriately
                 if (scan_angle_deg == -90) { // scan above
                     // TODO: MAYBE ADD ROUNDING IN COMPARISON HERE
@@ -325,16 +325,16 @@ void camera::get_arm_intersection_points(float scan_angle_deg, int num_robot_arm
                     continue;
                 }
 
-                if ((intersect_x >= 0 || cmp_floats(intersect_x, 0.0)) && (intersect_x <= arms[arm_index].get_x() || cmp_floats(intersect_x, arms[arm_index].get_x()))) {
+                if ((intersect_x >= 0 || cmp_floats_g(intersect_x, 0.0)) && (intersect_x <= arms[arm_index].get_x() || cmp_floats_g(intersect_x, arms[arm_index].get_x()))) {
                     if (intersection_greater_than_x) {
-                        if (intersect_x >=camera_coords_m.x || cmp_floats(intersect_x,camera_coords_m.x)) {
+                        if (intersect_x >=camera_coords_m.x || cmp_floats_g(intersect_x,camera_coords_m.x)) {
                             ret_camera_intersection_pts[arm_index].x = intersect_x;
                             ret_camera_intersection_pts[arm_index].y = intersect_y;
                             ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
                             ret_camera_intersection_pts[arm_index].is_set = true;
                         }
                     } else {
-                        if (intersect_x <= camera_coords_m.x || cmp_floats(intersect_x, camera_coords_m.x)) {
+                        if (intersect_x <= camera_coords_m.x || cmp_floats_g(intersect_x, camera_coords_m.x)) {
                             ret_camera_intersection_pts[arm_index].x = intersect_x;
                             ret_camera_intersection_pts[arm_index].y = intersect_y;
                             ret_camera_intersection_pts[arm_index].int_type = int_arm_intersect;
@@ -402,7 +402,7 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
             delta_x = abs(camera_coords_m.x - obstacle_center.x);
 
             inside_sqrt = pow(obstacle_radius, 2) - pow(delta_x, 2);
-            if (cmp_floats(inside_sqrt, 0.0)) {
+            if (cmp_floats_g(inside_sqrt, 0.0)) {
                 inside_sqrt = 0;
             }
 
@@ -416,15 +416,15 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
                 pos_int_dist = sqrt( pow(pos_int_y - camera_coords_m.y, 2));
                 neg_int_dist = sqrt( pow(neg_int_y - camera_coords_m.y, 2));
                 // the closer of the two intersection points will be registered by the camera ray - and if the closer point violates some other conditions - check if the other point should be set
-                if ((pos_int_dist <= max_distance_m || cmp_floats(pos_int_dist, max_distance_m))  && (pos_int_dist <= neg_int_dist || cmp_floats(pos_int_dist, neg_int_dist)) ) {
-                    if (scan_angle_deg == -90 && (pos_int_y >= camera_coords_m.y || cmp_floats(pos_int_y, camera_coords_m.y)) ) { // check above
+                if ((pos_int_dist <= max_distance_m || cmp_floats_g(pos_int_dist, max_distance_m))  && (pos_int_dist <= neg_int_dist || cmp_floats_g(pos_int_dist, neg_int_dist)) ) {
+                    if (scan_angle_deg == -90 && (pos_int_y >= camera_coords_m.y || cmp_floats_g(pos_int_y, camera_coords_m.y)) ) { // check above
                         ret_camera_intersection_pts[obstacle_num].x = camera_coords_m.x;
                         ret_camera_intersection_pts[obstacle_num].y = pos_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
                         ret_camera_intersection_pts[obstacle_num].is_set = true;
 
                         pos_int_set = true;
-                    } else if (scan_angle_deg == 90 && (pos_int_y <= camera_coords_m.y || cmp_floats(pos_int_y, camera_coords_m.y)) ) { // check below
+                    } else if (scan_angle_deg == 90 && (pos_int_y <= camera_coords_m.y || cmp_floats_g(pos_int_y, camera_coords_m.y)) ) { // check below
                         ret_camera_intersection_pts[obstacle_num].x = camera_coords_m.x;
                         ret_camera_intersection_pts[obstacle_num].y = pos_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
@@ -432,14 +432,14 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
 
                         pos_int_set = true;
                     }
-                } else if ((neg_int_dist <= max_distance_m || cmp_floats(neg_int_dist, max_distance_m)) && (neg_int_dist < pos_int_dist || !pos_int_set)) {
+                } else if ((neg_int_dist <= max_distance_m || cmp_floats_g(neg_int_dist, max_distance_m)) && (neg_int_dist < pos_int_dist || !pos_int_set)) {
                     // positive intersection point was not set, check to see if the negative intersection point should be set
-                    if (scan_angle_deg == -90 && (neg_int_y >= camera_coords_m.y || cmp_floats(neg_int_y, camera_coords_m.y)) ) { // check above
+                    if (scan_angle_deg == -90 && (neg_int_y >= camera_coords_m.y || cmp_floats_g(neg_int_y, camera_coords_m.y)) ) { // check above
                         ret_camera_intersection_pts[obstacle_num].x = camera_coords_m.x;
                         ret_camera_intersection_pts[obstacle_num].y = neg_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
                         ret_camera_intersection_pts[obstacle_num].is_set = true;
-                    } else if (scan_angle_deg == 90 && (neg_int_y <= camera_coords_m.y || cmp_floats(neg_int_y, camera_coords_m.y))) { // check below
+                    } else if (scan_angle_deg == 90 && (neg_int_y <= camera_coords_m.y || cmp_floats_g(neg_int_y, camera_coords_m.y))) { // check below
                         ret_camera_intersection_pts[obstacle_num].x = camera_coords_m.x;
                         ret_camera_intersection_pts[obstacle_num].y = neg_int_y;
                         ret_camera_intersection_pts[obstacle_num].int_type = int_obstacle_intersect;
@@ -483,7 +483,7 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
             c_qf = pow(obstacle_center.x, 2) + pow((camera_ray_b - obstacle_center.y), 2) - pow(obstacle_radius, 2);
 
             inside_sqrt = pow(b_qf, 2) - (4 * a_qf * c_qf);
-            if (cmp_floats(inside_sqrt, 0)) {
+            if (cmp_floats_g(inside_sqrt, 0)) {
                 inside_sqrt = 0;
             }
 
@@ -509,14 +509,14 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
                     cout << "posintdist: " << pos_int_dist << "negintdist: " << neg_int_dist << endl;
                 }
                 // the closer of the two intersection points will be registered by the camera ray - and if the closer point violates some other conditions - check if the other point should be set
-                if ((pos_int_dist <= max_distance_m || cmp_floats(pos_int_dist, max_distance_m)) && (pos_int_dist <= neg_int_dist || cmp_floats(pos_int_dist, neg_int_dist)) ) {
+                if ((pos_int_dist <= max_distance_m || cmp_floats_g(pos_int_dist, max_distance_m)) && (pos_int_dist <= neg_int_dist || cmp_floats_g(pos_int_dist, neg_int_dist)) ) {
 
                     if (intersection_greater_than_x) {
-                        if (pos_int_x >= camera_coords_m.x || cmp_floats(pos_int_x, camera_coords_m.x)) {
+                        if (pos_int_x >= camera_coords_m.x || cmp_floats_g(pos_int_x, camera_coords_m.x)) {
                             intersection_x_criteria = true;
                         } 
                     } else {
-                        if (pos_int_x <= camera_coords_m.x || cmp_floats(pos_int_x, camera_coords_m.x)) {
+                        if (pos_int_x <= camera_coords_m.x || cmp_floats_g(pos_int_x, camera_coords_m.x)) {
                             intersection_x_criteria = true;
                         } 
                     }
@@ -529,14 +529,14 @@ void camera::get_obstacle_intersection_points(float scan_angle_deg, int num_obst
 
                         pos_int_set = true;
                     } 
-                } else if ((neg_int_dist <= max_distance_m || cmp_floats(neg_int_dist, max_distance_m)) && (neg_int_dist < pos_int_dist || !pos_int_set)) {
+                } else if ((neg_int_dist <= max_distance_m || cmp_floats_g(neg_int_dist, max_distance_m)) && (neg_int_dist < pos_int_dist || !pos_int_set)) {
                     // positive intersection point was not set, check to see if the negative intersection point should be set
                     if (intersection_greater_than_x) {
-                        if (neg_int_x >= camera_coords_m.x || cmp_floats(neg_int_x, camera_coords_m.x)) {
+                        if (neg_int_x >= camera_coords_m.x || cmp_floats_g(neg_int_x, camera_coords_m.x)) {
                             intersection_x_criteria = true;
                         } 
                     } else {
-                        if (neg_int_x <= camera_coords_m.x || cmp_floats(neg_int_x, camera_coords_m.x)) {
+                        if (neg_int_x <= camera_coords_m.x || cmp_floats_g(neg_int_x, camera_coords_m.x)) {
                             intersection_x_criteria = true;
                         } 
                     }

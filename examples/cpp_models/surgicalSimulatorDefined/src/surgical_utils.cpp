@@ -5,7 +5,7 @@
 
 namespace despot {
 
-void action_to_movements(robotArmActions action, int xy_step_size, int theta_deg_step_size, int &delta_x, int &delta_y, int &delta_theta_degrees) {
+void action_to_movements_g(robotArmActions action, int xy_step_size, int theta_deg_step_size, int &delta_x, int &delta_y, int &delta_theta_degrees) {
     /*
     * This function converts the robot arm action to a movement in terms of delta_x, delta_y, delta_theta_degrees
     * 
@@ -48,7 +48,40 @@ void action_to_movements(robotArmActions action, int xy_step_size, int theta_deg
     }
 }   
 
-bool cmp_floats(float a, float b) {
+
+void int_to_action_array_g(int actionNum, robotArmActions *ret_action_array, int ret_action_array_size) {
+    /*
+    * Convert specified integer to an array of actions - where the action at index i corresponds to the action the robot's ith robot arm will take.
+    * returns: by pass by reference:
+    *   - the array of robot actions to take
+    */ 
+    if (ret_action_array_size != NUM_ROBOT_ARMS_g) {
+        std::cerr << "ERROR: invalid return array size in IntToActions" << std::endl;
+        exit(1);
+    }
+
+    int num_actions_per_arm = 6; // as we do not include the stay action for these purposes
+    int arm_to_move_index = static_cast<int>(actionNum/num_actions_per_arm);
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+        if (arm_num == arm_to_move_index) {
+            ret_action_array[arm_to_move_index] = static_cast<robotArmActions>(actionNum%num_actions_per_arm);
+        } else {
+            ret_action_array[arm_num] = stay;
+        }
+    }
+    return;
+}
+
+int total_num_actions_g() {
+    /*
+    * The total number of actions possible for the robot. - this is what is returned by SurgicalDespot's NumActions functions and the max number that should be input to 
+    * int_to_action_array
+    */ 
+    return 6*NUM_ROBOT_ARMS_g;
+}
+
+
+bool cmp_floats_g(float a, float b) {
     /*
     * Compares two floats up to the float_compare_precision
     * 
@@ -64,7 +97,7 @@ bool cmp_floats(float a, float b) {
     }
 }
 
-int random_number_to_index(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum) {
+int random_number_to_index_g(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum) {
     /*
     * Used for deterministic observations. Returns the that results from using the specified random number 
     * with the given discrete probability distribution. 

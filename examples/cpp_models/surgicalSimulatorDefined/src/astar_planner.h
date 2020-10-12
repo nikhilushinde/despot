@@ -2,7 +2,6 @@
 #define ASTAR_PLANNER_H
 
 #include "environment.h"
-#include "surgical_despot.h"
 #include "pq_dict.h"
 
 using std::vector;
@@ -23,7 +22,7 @@ namespace despot {
 
 class astar_planner {
 public:
-    astar_planner(const SurgicalDespot& surgicalDespot); // default constructor
+    astar_planner(); // default constructor
 
     double heuristic(const environment& environment_state) const; //calculates the heuristic cost given a certain state
     void get_children(const environment &parent_state, environment *ret_child_states, ACT_TYPE *corresponding_act_nums, double *corresponding_costs, int &num_children_returned, int ret_array_size) const; // gets the children of the parent state 
@@ -33,7 +32,6 @@ public:
 
 
 private: // variables
-    SurgicalDespot surgicalDespot_m; // to keep to use its functions
     environment goal_state_m; // the goal state that was found - assigned in plan_a_star
     environment start_state_m; // the starting state fro which to plan a star
 

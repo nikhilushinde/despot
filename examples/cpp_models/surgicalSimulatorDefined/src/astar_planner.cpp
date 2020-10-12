@@ -13,11 +13,10 @@ using std::find;
 
 namespace despot {
 
-astar_planner::astar_planner(SurgicalDespot const& surgicalDespot) {
+astar_planner::astar_planner() {
     /* 
     * the constructor for astar_planner 
     */ 
-    surgicalDespot_m = surgicalDespot;
     open_set_m = pqdict_env_double(false); // initialize it to be a min pq
 
 }
@@ -65,7 +64,7 @@ void astar_planner::get_children(const environment &parent_state, environment *r
     *   - make copies of the parent state and step them. Only add feasible actions that do not error to the list of children.  
     */
    
-    if (ret_array_size < surgicalDespot_m.NumActions()) {
+    if (ret_array_size < total_num_actions_g()) {
         cerr << "Error: in get children the return array size was too small";
         exit(1);
     }
@@ -76,9 +75,9 @@ void astar_planner::get_children(const environment &parent_state, environment *r
 
     int ret_count_num = 0;
 
-    for (int act_num = 0; act_num < surgicalDespot_m.NumActions(); act_num++) {
+    for (int act_num = 0; act_num < total_num_actions_g(); act_num++) {
         environment potential_child_environment = parent_state;
-        surgicalDespot_m.IntToActions(act_num, action_array, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(act_num, action_array, NUM_ROBOT_ARMS_g);
         potential_child_environment.step(action_array, error, cost);
 
         if (!error) {
@@ -162,7 +161,7 @@ void astar_planner::plan_a_star(const environment &start_environment_state) {
     environment current_state;
     double current_val;
 
-    int ret_child_array_size = surgicalDespot_m.NumActions();
+    int ret_child_array_size = total_num_actions_g();
     int num_returned_children;
     environment returned_child_states[ret_child_array_size];
     double returned_child_costs[ret_child_array_size];
@@ -173,7 +172,7 @@ void astar_planner::plan_a_star(const environment &start_environment_state) {
     while(!goal_reached) {
         if (iter_count % 1000 == 0 && verbose) {
             cout << "Iteration: " << iter_count << endl;
-            open_set_m.printChecker();
+            //open_set_m.printChecker();
             cout << "closed set size: " << closed_set_m.size() << endl;
         }
 

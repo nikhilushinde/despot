@@ -54,7 +54,7 @@ public:
         */ 
         robotArmActions action_array[NUM_ROBOT_ARMS_g];
         // convert the integer to actions
-        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(action_num, action_array, NUM_ROBOT_ARMS_g);
 
         bool error; 
         float cost;
@@ -78,8 +78,8 @@ public:
         robotArmActions act_array1[NUM_ROBOT_ARMS_g];
         robotArmActions act_array2[NUM_ROBOT_ARMS_g];
 
-        surgicalDespot_m->IntToActions(act1, act_array1, NUM_ROBOT_ARMS_g);
-        surgicalDespot_m->IntToActions(act2, act_array2, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(act1, act_array1, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(act2, act_array2, NUM_ROBOT_ARMS_g);
 
         for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
             if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
@@ -185,7 +185,7 @@ public:
         */ 
         robotArmActions action_array[NUM_ROBOT_ARMS_g];
         // convert the integer to actions
-        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(action_num, action_array, NUM_ROBOT_ARMS_g);
 
         bool error; 
         float cost;
@@ -209,8 +209,8 @@ public:
         robotArmActions act_array1[NUM_ROBOT_ARMS_g];
         robotArmActions act_array2[NUM_ROBOT_ARMS_g];
 
-        surgicalDespot_m->IntToActions(act1, act_array1, NUM_ROBOT_ARMS_g);
-        surgicalDespot_m->IntToActions(act2, act_array2, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(act1, act_array1, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(act2, act_array2, NUM_ROBOT_ARMS_g);
 
         for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
             if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
@@ -235,7 +235,7 @@ public:
         * Returns true if the action brings the robot closer to the goal and false otherwise
         */ 
         robotArmActions action_array[NUM_ROBOT_ARMS_g];
-        surgicalDespot_m->IntToActions(action_num, action_array, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(action_num, action_array, NUM_ROBOT_ARMS_g);
         robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
         environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
         environmentCoords goal_coords;
@@ -433,32 +433,8 @@ int SurgicalDespot::NumActions() const{
     * eg: 2 arms - 0, 1, 2, 3, 4, 5 - respective actions on the first arm and no action on the second arm
     * 6, 7, 8, 9, 10, 11 - subtract 6 and the respective action is then used for the second arm and no action on the first
     */
-    return 6*NUM_ROBOT_ARMS_g;
+    return total_num_actions_g();
 }
-
-void SurgicalDespot::IntToActions(int actionNum, robotArmActions *ret_action_array, int ret_action_array_size) const {
-    /*
-    * Convert specified integer to an array of actions - where the action at index i corresponds to the action the robot's ith robot arm will take.
-    * returns: by pass by reference:
-    *   - the array of robot actions to take
-    */ 
-    if (ret_action_array_size != NUM_ROBOT_ARMS_g) {
-        cerr << "ERROR: invalid return array size in IntToActions" << endl;
-        exit(1);
-    }
-
-    int num_actions_per_arm = 6; // as we do not include the stay action for these purposes
-    int arm_to_move_index = static_cast<int>(actionNum/num_actions_per_arm);
-    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
-        if (arm_num == arm_to_move_index) {
-            ret_action_array[arm_to_move_index] = static_cast<robotArmActions>(actionNum%num_actions_per_arm);
-        } else {
-            ret_action_array[arm_num] = stay;
-        }
-    }
-    return;
-}
-
 
 bool SurgicalDespot::Step(State& state, double rand_num, ACT_TYPE action, double& reward, OBS_TYPE& obs) const {
     /*
@@ -478,7 +454,7 @@ bool SurgicalDespot::Step(State& state, double rand_num, ACT_TYPE action, double
     environment *environment_state = static_cast<environment*>(&state);
     robotArmActions action_list[NUM_ROBOT_ARMS_g];
     int actionNum = static_cast<int>(action);
-    IntToActions(actionNum, action_list, NUM_ROBOT_ARMS_g);
+    int_to_action_array_g(actionNum, action_list, NUM_ROBOT_ARMS_g);
     
     // environment step
     bool error = false; // returns if the action caused an error 
@@ -773,7 +749,7 @@ void SurgicalDespot::PrintAction(ACT_TYPE action, std::ostream& out)  const {
     * Print what the action means to the outstream.
     */  
     robotArmActions action_array[NUM_ROBOT_ARMS_g];
-    IntToActions(action, action_array, NUM_ROBOT_ARMS_g);
+    int_to_action_array_g(action, action_array, NUM_ROBOT_ARMS_g);
     cout << "ACTIONS: actions list: ";
     for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
         if (action_array[arm_num] == xRight) {

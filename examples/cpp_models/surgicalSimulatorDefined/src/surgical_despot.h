@@ -12,6 +12,7 @@
 #include <despot/core/mdp.h>
 #include "environment.h"
 #include "render_sim.h"
+#include "astar_planner.h"
 
 
 namespace despot {
@@ -30,7 +31,7 @@ public:
 
     /* returns the number of actions */
     int NumActions() const;
-    void IntToActions(int actionNum, robotArmActions *ret_action_array, int ret_action_array_size) const; // convert integer to action array that is taken by the environment
+    //void IntToActions(int actionNum, robotArmActions *ret_action_array, int ret_action_array_size) const; // convert integer to action array that is taken by the environment
 
     /* Deterministic simulative model */
     bool Step(State& state, double rand_num, ACT_TYPE action, double& reward, OBS_TYPE& obs) const;

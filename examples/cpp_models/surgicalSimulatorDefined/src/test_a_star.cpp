@@ -1,4 +1,5 @@
 #include "astar_planner.h"
+#include "render_sim.h"
 
 /*
 * This file contains test code to test the a star planner for the environment class
@@ -8,8 +9,7 @@ using std::vector;
 
 int main() {
     environment test_environment;
-    SurgicalDespot surgicalDespot;
-    astar_planner planner(surgicalDespot);
+    astar_planner planner;
 
     planner.plan_a_star(test_environment);
     vector<ACT_TYPE> actions_to_goal;
@@ -28,7 +28,7 @@ int main() {
     for (int i = 0; i < actions_to_goal.size(); i++) {
         // step the environment 
         current_action = actions_to_goal[i];
-        surgicalDespot.IntToActions(current_action, action_array, NUM_ROBOT_ARMS_g);
+        int_to_action_array_g(current_action, action_array, NUM_ROBOT_ARMS_g);
         test_environment.step(action_array, error, cost);
         // render the environment
         Renderer.render_environment(test_environment, 50);
