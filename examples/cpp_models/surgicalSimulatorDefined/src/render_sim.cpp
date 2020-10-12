@@ -9,6 +9,7 @@ using cv::Scalar;
 using cv::namedWindow;
 using cv::WINDOW_AUTOSIZE;
 using cv::imshow;
+using cv::imwrite;
 using cv::flip;
 using cv::waitKey;
 
@@ -226,6 +227,13 @@ void render_sim::render_environment(const environment &env, int waitKeyTime) con
     namedWindow(window_name_m, WINDOW_AUTOSIZE);
     imshow(window_name_m, flippedImage);
     waitKey(waitKeyTime);
+
+    std::string save_file_name; 
+    save_file_name = results_folder_name_g;
+    save_file_name += std::to_string(saved_image_number_g);
+    save_file_name += ".jpg";
+    saved_image_number_g ++; // increment the global saved image number 
+    imwrite(save_file_name, flippedImage);
 }
 
 } // end namespace despot

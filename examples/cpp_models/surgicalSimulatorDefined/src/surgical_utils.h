@@ -22,6 +22,10 @@ namespace despot {
 static const float THETA_MULTIPLIER = M_PI/180.0;
 static const float float_compare_precision = 0.005f;
 
+// global variable to keep track of the images that have been generated to show the route - increments every time you save an image
+static int saved_image_number_g = 0;
+
+
 // enum to define the actions that the robot arm can take 
 enum robotArmActions {
     xRight = 0, // end effector moves forward horizontally

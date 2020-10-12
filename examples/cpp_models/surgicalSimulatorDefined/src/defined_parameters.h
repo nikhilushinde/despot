@@ -123,6 +123,11 @@ static const bool USE_CONSTANT_MOVEMENT_COST_g = true; // defines if the cost of
 static const float OBSTACLE_ERROR_COST = MOVEMENT_ERROR; //define constant cost for error in obstacle manipulation
 #define TERMINAL_REWARD_g 1000000000
 
+
+// results related parameters
+static const std::string results_folder_name_g = "./results/internal_results_test_dir/";
+
+
 /*
 NOTE: WHAT ATTRIBUTES TO DELETE FROM OBJECTS AND REPLACE WITH THESE PARAMETERS
 - ENVIRONMENT HEIGHT

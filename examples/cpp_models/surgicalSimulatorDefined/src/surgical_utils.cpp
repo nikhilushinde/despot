@@ -5,6 +5,7 @@
 
 namespace despot {
 
+
 void action_to_movements_g(robotArmActions action, int xy_step_size, int theta_deg_step_size, int &delta_x, int &delta_y, int &delta_theta_degrees) {
     /*
     * This function converts the robot arm action to a movement in terms of delta_x, delta_y, delta_theta_degrees
