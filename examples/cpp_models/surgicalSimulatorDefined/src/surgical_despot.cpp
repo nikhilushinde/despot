@@ -317,7 +317,7 @@ public:
                 action_weight_array[particle_chosen_action] += environment_state->weight;
             } else {
                 // run a star on the environment 
-                planner.plan_a_star(*environment_state);
+                planner.plan_a_star(*environment_state, true);
                 planner.get_path(astar_found_path_actions);
                 particle_chosen_action = astar_found_path_actions[0];
                 action_weight_array[particle_chosen_action] += environment_state->weight;
@@ -466,7 +466,7 @@ public:
             } else {
                 // run a star on the environment 
                 planner.plan_a_star(*environment_state);
-                currentValue = planner.get_goal_cost();
+                currentValue = planner.get_goal_cost() + TERMINAL_REWARD_g;
                 astar_best_value_map[*environment_state] = currentValue;
                 totalValue += (currentValue * environment_state->weight);
             }
@@ -708,7 +708,7 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
         return new SurgicalDespotEuclideanUpperBound(this);
     } else if (name == "ASTAR") {
-        return new  SurgicalDespotAstarUpperBound(this);  
+        return new SurgicalDespotAstarUpperBound(this);  
     } else {
         cerr << "Specified Upper Bound: " << name << " is NOT SUPPORTED!" << endl;
         exit(1);
@@ -732,14 +732,14 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
     * Creates the lower bound for the TagNikhil class. 
     */ 
     const DSPOMDP *model = this;
-    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SCHR") {
+    if (name == "TRIVIAL" || name == "DEFAULT" || name == "ASTAR") {
         // Use the smart history based default rollout policy to create the lower bound
         //return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
         cout << "Create closer history policy based lower bound" << endl;
-        return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
-    } else if (name == "ASTAR") {
-        return new SurgicalDespotAstarPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
+        return new SurgicalDespotAstarPolicy(model, CreateParticleLowerBound(particle_bound_name));
+    } else if (name == "SCHR") {
+        return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
     } else if (name == "SHR") {
         return new SurgicalDespotHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
     } else {
