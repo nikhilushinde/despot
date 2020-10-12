@@ -28,7 +28,8 @@ public:
     void get_children(const environment &parent_state, environment *ret_child_states, ACT_TYPE *corresponding_act_nums, double *corresponding_costs, int &num_children_returned, int ret_array_size) const; // gets the children of the parent state 
     bool is_goal(const environment &environment_state); // checks if the environment state is a goal state
     void get_path(vector<ACT_TYPE>& ret_all_path_actions); // gets the optimal path from the q values that have been found via a star
-    void plan_a_star(const environment &start_environment_state); // uses a star to plan path to goal. 
+    double get_goal_cost(); // gets the non discounted cost of getting to the goal state. 
+    void plan_a_star(const environment &start_environment_state, bool verbose = false); // uses a star to plan path to goal. 
 
 
 private: // variables

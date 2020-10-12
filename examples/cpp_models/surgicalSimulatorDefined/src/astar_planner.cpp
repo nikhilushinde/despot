@@ -127,10 +127,20 @@ void astar_planner::get_path(vector<ACT_TYPE>& ret_all_path_actions){
         ret_all_path_actions.insert(ret_all_path_actions.begin(), parent_dict_m[current_state_ptr].second);
         current_state_ptr = parent_dict_m[current_state_ptr].first;
     }
-
 }
 
-void astar_planner::plan_a_star(const environment &start_environment_state) {
+double astar_planner::get_goal_cost() {
+    /*
+    * Get the non discounted cost of getting to the goal state from the g dictionary
+    * returns: 
+    *   - the cost to get to the goal state without discounting
+    *
+    * NOTE: can only call this after plan_a_star. otherwise the behavior is invalid. 
+    */ 
+    return g_dict_m[goal_state_m];
+}
+
+void astar_planner::plan_a_star(const environment &start_environment_state, bool verbose) {
     /*
     * Does the entire A star planning algorithm.
     * args:
@@ -139,8 +149,6 @@ void astar_planner::plan_a_star(const environment &start_environment_state) {
     * Methodology:
     *   - Does A star planning - uses the cost as a metric to get the value of each state so the COST IS USED FOR THE VALUES not reward
     */
-    bool verbose = true;
-
     // clear everything
     g_dict_m.clear();
     parent_dict_m.clear();

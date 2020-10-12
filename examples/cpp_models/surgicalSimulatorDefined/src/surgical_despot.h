@@ -20,7 +20,11 @@ namespace despot {
 class SurgicalDespot: public DSPOMDP {
 
 friend class SurgicalDespotHistoryPolicy;
+friend class SurgicalDespotCloserHistoryPolicy;
+friend class SurgicalDespotAstarPolicy;
+
 friend class SurgicalDespotEuclideanUpperBound;
+friend class SurgicalDespotAstarUpperBound;
 
 protected:
     mutable MemoryPool<environment> memory_pool_;

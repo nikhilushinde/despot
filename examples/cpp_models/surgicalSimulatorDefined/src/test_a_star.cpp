@@ -11,7 +11,7 @@ int main() {
     environment test_environment;
     astar_planner planner;
 
-    planner.plan_a_star(test_environment);
+    planner.plan_a_star(test_environment, true);
     vector<ACT_TYPE> actions_to_goal;
     planner.get_path(actions_to_goal);
 

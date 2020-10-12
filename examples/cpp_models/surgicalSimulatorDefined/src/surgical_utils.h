@@ -51,6 +51,7 @@ struct environmentCoords {
 void action_to_movements_g(robotArmActions action, int xy_step_size, int theta_deg_step_size, int &delta_x, int &delta_y, int &delta_theta_degrees); // go from an action to the exact change in x,y,theta that the robot needs to make
 void int_to_action_array_g(int actionNum, robotArmActions *ret_action_array, int ret_action_array_size); // convert integer to list of actions of type robot arm actions
 int total_num_actions_g(); // the total number of actions - integers up to this are valid actions as inputs to int_to_action_array
+bool isReverseAction_g(ACT_TYPE act1, ACT_TYPE act2); // checks if act1 undoes act2
 bool cmp_floats_g(float a, float b); // compare floats with some epsilon value
 int random_number_to_index_g(const double probabilityDistrib[], int probabilityDistrib_size, double randomNum); // to convert a random number to an integer based on a discrete probability distribution 
 

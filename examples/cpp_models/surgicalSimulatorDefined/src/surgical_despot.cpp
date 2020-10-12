@@ -69,36 +69,6 @@ public:
         }
     }
 
-    bool isReverseAction(ACT_TYPE act1, ACT_TYPE act2) const {
-        /*
-        * checks if act2 undoes the effects of act1
-        * returns:
-        *   - boolean: true if the act1 reverses act2 else false
-        */ 
-        robotArmActions act_array1[NUM_ROBOT_ARMS_g];
-        robotArmActions act_array2[NUM_ROBOT_ARMS_g];
-
-        int_to_action_array_g(act1, act_array1, NUM_ROBOT_ARMS_g);
-        int_to_action_array_g(act2, act_array2, NUM_ROBOT_ARMS_g);
-
-        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
-            if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
-            (act_array2[arm_num] == stay && act_array1[arm_num] != stay )) {
-                return false;
-            } 
-            bool isReverse = ((act_array1[arm_num] == xRight && act_array2[arm_num] == xLeft) ||
-                (act_array1[arm_num] == xLeft && act_array2[arm_num] == xRight) ||
-                (act_array1[arm_num] == yUp && act_array2[arm_num] == yDown) ||
-                (act_array1[arm_num] == yDown && act_array2[arm_num] == yUp) ||
-                (act_array1[arm_num] == thetaUp && act_array2[arm_num] == thetaDown) ||
-                (act_array1[arm_num] == thetaDown && act_array2[arm_num] == thetaUp));
-            return isReverse; // return immediately as only 1 non stay action. 
-        }
-
-        return false;
-
-    }
-
     ACT_TYPE Action(const vector<State*>& particles, RandomStreams &streams, History& history) const{
         /*
         * This function returns the action to take when using this history based policy. The action
@@ -129,7 +99,7 @@ public:
         } else {
             for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
                 if (isFeasibleAction(action_num, cpy_environment_state) && 
-                !isReverseAction(action_num, history.LastAction())) {
+                !isReverseAction_g(action_num, history.LastAction())) {
                     feasible_actions.push_back(action_num);
                 }
             }
@@ -198,36 +168,6 @@ public:
             environment_state.robObj_m.state_rollback();
             return true;
         }
-    }
-
-    bool isReverseAction(ACT_TYPE act1, ACT_TYPE act2) const {
-        /*
-        * checks if act2 undoes the effects of act1
-        * returns:
-        *   - boolean: true if the act1 reverses act2 else false
-        */ 
-        robotArmActions act_array1[NUM_ROBOT_ARMS_g];
-        robotArmActions act_array2[NUM_ROBOT_ARMS_g];
-
-        int_to_action_array_g(act1, act_array1, NUM_ROBOT_ARMS_g);
-        int_to_action_array_g(act2, act_array2, NUM_ROBOT_ARMS_g);
-
-        for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
-            if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
-            (act_array2[arm_num] == stay && act_array1[arm_num] != stay )) {
-                return false;
-            } 
-            bool isReverse = ((act_array1[arm_num] == xRight && act_array2[arm_num] == xLeft) ||
-                (act_array1[arm_num] == xLeft && act_array2[arm_num] == xRight) ||
-                (act_array1[arm_num] == yUp && act_array2[arm_num] == yDown) ||
-                (act_array1[arm_num] == yDown && act_array2[arm_num] == yUp) ||
-                (act_array1[arm_num] == thetaUp && act_array2[arm_num] == thetaDown) ||
-                (act_array1[arm_num] == thetaDown && act_array2[arm_num] == thetaUp));
-            return isReverse; // return immediately as only 1 non stay action. 
-        }
-
-        return false;
-
     }
 
     bool isTowardsGoal(int action_num, const environment& environment_state) const{
@@ -301,7 +241,7 @@ public:
         } else {
             for (int action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
                 if (isFeasibleAction(action_num, cpy_environment_state) && 
-                !isReverseAction(action_num, history.LastAction())) {
+                !isReverseAction_g(action_num, history.LastAction())) {
                     feasible_actions.push_back(action_num);
                     if (isTowardsGoal(action_num, cpy_environment_state)) {
                         towards_goal_feasible_actions.push_back(action_num);
@@ -324,7 +264,70 @@ public:
         return feasible_actions[ret_feasible_action_index];
     }   
 };
+/*
+* ***********************************************************************************
+* A star based Default Policy class: to get a LOWER BOUND in  DESPOT. 
+* ***********************************************************************************
+*/
+class SurgicalDespotAstarPolicy:  public DefaultPolicy {
+/*
+* This is an A star based default rollout policy to get the lower bounds for the environment in DESPOT
+* Policy methodology: 
+*   - Do A star on all the environments in the belief and based on that take the best action.  
+*/
+private: 
+    const SurgicalDespot *surgicalDespot_m; // pointer to the SurgicalDespot DSPOMDP model
+public:
+    SurgicalDespotAstarPolicy(const DSPOMDP* model, ParticleLowerBound* bound):
+    DefaultPolicy(model, bound) {
+        /*
+        * Constructor ot initialize the A star based default policy
+        * args:
+        *   - model: DSPOMDP model - SurgicalDespot
+        *   - bound: a particle lower bound to use after the finite random number streams used when the default policy runs out
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+    }
 
+    ACT_TYPE Action(const vector<State*>&particles, RandomStreams &streams, History& history) const {
+        /*
+        * This function returns the action to take when using the A star based policy. The action
+        * is based on the current belief particles. 
+        * 
+        * Methodology: Do A star on all the environments in the blief and based on that take the 
+        * best action based on the votes based off of the action that has the "most" particle weight
+        * behind it 
+        * - if two environments are the same - don't redo A star and just use the last A star's value
+        */ 
+        astar_planner planner; 
+
+        // map to store the A star values of particles 
+        std::map<environment, ACT_TYPE> astar_best_action_map;
+        // create a list where the index is the action number and the value is the weight towards that  action
+        double action_weight_array[surgicalDespot_m->NumActions()];
+        ACT_TYPE particle_chosen_action; 
+        std::vector<ACT_TYPE> astar_found_path_actions;
+
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
+            std::map<environment, ACT_TYPE>::iterator it = astar_best_action_map.find(*environment_state);
+            if (it != astar_best_action_map.cend()) {
+                // have already run a star on this environment
+                particle_chosen_action = astar_best_action_map[*environment_state];
+                action_weight_array[particle_chosen_action] += environment_state->weight;
+            } else {
+                // run a star on the environment 
+                planner.plan_a_star(*environment_state);
+                planner.get_path(astar_found_path_actions);
+                particle_chosen_action = astar_found_path_actions[0];
+                action_weight_array[particle_chosen_action] += environment_state->weight;
+            }
+        }
+        // chose the best action - the index in the action_weight_array that has the greatest weight
+        return static_cast<ACT_TYPE>(std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions())));
+
+    }
+};
 
 /*
 * ***********************************************************************************
@@ -403,6 +406,70 @@ public:
             double discountedValue = -(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount())
 				+ TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
             totalValue += discountedValue;
+        }
+        return totalValue;
+    }
+};
+
+/*
+* ***********************************************************************************
+* Astar based UPPER bound class
+* ***********************************************************************************
+*/
+class SurgicalDespotAstarUpperBound: public ParticleUpperBound, public BeliefUpperBound {
+/*
+* This class creates an upper bound on the reward for the environment using the metric of
+* the nondiscounted Astar value that is computed from running the algorithm. 
+*/
+private:
+    const SurgicalDespot *surgicalDespot_m; // pointer to the DSPOMDP model of SurgicalDespot
+public:
+    SurgicalDespotAstarUpperBound(const SurgicalDespot *model): surgicalDespot_m(model) {
+        /*
+        *Constructor fo the A star based upper bound class
+        */ 
+        cout << "Creating the A star based upper bound" << endl;
+    }
+
+    using ParticleUpperBound::Value;
+    double Value(const State &s) const {
+        // Required function
+        astar_planner planner;
+        const environment* environment_state = static_cast<const environment*>(&s);
+        planner.plan_a_star(*environment_state);
+        double nonDiscountedUpperBoundValue = planner.get_goal_cost();
+        return nonDiscountedUpperBoundValue;
+    }
+
+    using BeliefUpperBound::Value;
+    double Value(const Belief* belief) const {
+        /*
+        * Compute the nondiscounted value of each particle using A star and average them 
+        * to compute the belief upper bound value. 
+        */ 
+        astar_planner planner;
+
+        std::map<environment, double> astar_best_value_map;
+        const vector<State *>&particles = static_cast<const ParticleBelief*>(belief)->particles();
+        double totalValue = 0;
+
+        const environment *environment_state;
+        double currentValue;
+
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
+            std::map<environment, double>::iterator it = astar_best_value_map.find(*environment_state);
+            if (it != astar_best_value_map.cend()) {
+                // have already run a star on this environment
+                currentValue = astar_best_value_map[*environment_state];
+                totalValue += (currentValue * environment_state->weight);
+            } else {
+                // run a star on the environment 
+                planner.plan_a_star(*environment_state);
+                currentValue = planner.get_goal_cost();
+                astar_best_value_map[*environment_state] = currentValue;
+                totalValue += (currentValue * environment_state->weight);
+            }
         }
         return totalValue;
     }
@@ -640,6 +707,8 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     */ 
     if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
         return new SurgicalDespotEuclideanUpperBound(this);
+    } else if (name == "ASTAR") {
+        return new  SurgicalDespotAstarUpperBound(this);  
     } else {
         cerr << "Specified Upper Bound: " << name << " is NOT SUPPORTED!" << endl;
         exit(1);
@@ -669,6 +738,8 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
         cout << "Create closer history policy based lower bound" << endl;
         return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
+    } else if (name == "ASTAR") {
+        return new SurgicalDespotAstarPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
     } else if (name == "SHR") {
         return new SurgicalDespotHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
     } else {

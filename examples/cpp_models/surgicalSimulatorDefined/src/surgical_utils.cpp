@@ -72,6 +72,40 @@ void int_to_action_array_g(int actionNum, robotArmActions *ret_action_array, int
     return;
 }
 
+bool isReverseAction_g(ACT_TYPE act1, ACT_TYPE act2)  {
+    /*
+    * checks if act2 undoes the effects of act1
+    * args:
+    *   - act1: action number 1 - of ACT_TYPE not robotArmActions 
+    *   - act2: action number 2 - of ACT_TYPE not robotArmActions
+    * returns:
+    *   - boolean: true if the act1 reverses act2 else 
+    *
+    */ 
+    robotArmActions act_array1[NUM_ROBOT_ARMS_g];
+    robotArmActions act_array2[NUM_ROBOT_ARMS_g];
+
+    int_to_action_array_g(act1, act_array1, NUM_ROBOT_ARMS_g);
+    int_to_action_array_g(act2, act_array2, NUM_ROBOT_ARMS_g);
+
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num ++) {
+        if ((act_array1[arm_num] == stay && act_array2[arm_num] != stay ) ||
+        (act_array2[arm_num] == stay && act_array1[arm_num] != stay )) {
+            return false;
+        } 
+        bool isReverse = ((act_array1[arm_num] == xRight && act_array2[arm_num] == xLeft) ||
+            (act_array1[arm_num] == xLeft && act_array2[arm_num] == xRight) ||
+            (act_array1[arm_num] == yUp && act_array2[arm_num] == yDown) ||
+            (act_array1[arm_num] == yDown && act_array2[arm_num] == yUp) ||
+            (act_array1[arm_num] == thetaUp && act_array2[arm_num] == thetaDown) ||
+            (act_array1[arm_num] == thetaDown && act_array2[arm_num] == thetaUp));
+        return isReverse; // return immediately as only 1 non stay action. 
+    }
+
+    return false;
+}
+
+
 int total_num_actions_g() {
     /*
     * The total number of actions possible for the robot. - this is what is returned by SurgicalDespot's NumActions functions and the max number that should be input to 
