@@ -76,6 +76,10 @@ void pqdict_env_double::erase(const environment environment_key) {
         update_top();
         //cout << "FINISHED UPDATING TOP" << endl;
     } else {
+        if (pqdict_map_m.erase(environment_key) != 1) {
+            cerr << "Error: error in pqdict: did not properly erase key" << endl;
+            exit(1);
+        }
         //cout << "non topped erased output: " << pqdict_map_m.erase(environment_key) << endl;
     }
 

@@ -31,7 +31,7 @@ int main() {
         surgicalDespot.IntToActions(current_action, action_array, NUM_ROBOT_ARMS_g);
         test_environment.step(action_array, error, cost);
         // render the environment
-        Renderer.render_environment(test_environment, 300);
+        Renderer.render_environment(test_environment, 50);
     }   
 
     return 0;
