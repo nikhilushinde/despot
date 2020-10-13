@@ -547,7 +547,7 @@ public:
             action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
             totalDiscountedValue += (environment_state->weight*astar_best_actionvalue_map[*environment_state].second);
         }
-        
+
         ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
         ValuedAction retValuedAction(best_action, totalDiscountedValue);
         return retValuedAction; 
@@ -949,23 +949,43 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         cout << "IN INITIAL BELIEF FOR SurgicalDespot" << endl;
 
         // TODO: CHANGE FROM HARD CODING FOR 3 OBSTACLES
-        if (NUM_OBSTACLES_g != 3) {
-            cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 OBSTACLES AT THE MOMENT" << endl;
+        if (NUM_OBSTACLES_g != 3 && NUM_OBSTACLES_g != 4) {
+            cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 or 4 OBSTACLES AT THE MOMENT" << endl;
             exit(1);
         }
-        float init_obstacle_ks[NUM_OBSTACLES_g];
-        for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
-            for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
-                for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
-                    new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
-                    init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
-                    init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
-                    init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
-                    new_particle_state->set_obstacle_ks(init_obstacle_ks);
-                    particles.push_back(new_particle_state);
+        if (NUM_OBSTACLES_g == 3) {
+            float init_obstacle_ks[NUM_OBSTACLES_g];
+            for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
+                for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
+                    for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
+                        new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
+                        init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                        init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
+                        init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
+                        new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                        particles.push_back(new_particle_state);
+                    }
+                }
+            }
+        } else if (NUM_OBSTACLES_g == 4) {
+            float init_obstacle_ks[NUM_OBSTACLES_g];
+            for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
+                for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
+                    for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
+                        for (int obs4 = 0; obs4 < NUM_OBS_K_CLASSES_g; obs4++) {
+                            new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
+                            init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                            init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
+                            init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
+                            init_obstacle_ks[3] = all_possible_obs_ks_g[obs4];
+                            new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                            particles.push_back(new_particle_state);
+                        }
+                    }
                 }
             }
         }
+        
         cout << "Total number of particles created: " << particles.size() << endl;
         return new ParticleBelief(particles, this);
     } else {
