@@ -508,13 +508,15 @@ public:
         double default_init_value = 0; // default value to initialize the map
 
         // loop to spawn all threads
-        cout << "Spawning A star threads: " << endl;
+        //cout << "Spawning A star threads: " << endl;
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            /*
             if (particle_num%10 == 0 || particle_num == particles.size() - 1) {
                 cout << particle_num << ", " << endl;
             } else {
                 cout << particle_num << ", ";
             }
+            */
 
             const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
             std::map<environment, std::pair<ACT_TYPE, double>>::iterator it = astar_best_actionvalue_map.find(*environment_state);
@@ -532,19 +534,14 @@ public:
         }
 
         // wait for all the threads to join
-        cout << "Waiting for Astar threads to join: " << endl;
+        //cout << "Waiting for Astar threads to join: " << endl;
         for (int thread_num = 0; thread_num < num_created_threads; thread_num++) {
-            if (thread_num%10 == 0 || thread_num == particles.size() - 1) {
-                cout << thread_num << ", " << endl;
-            } else {
-                cout << thread_num << ", ";
-            }
             all_particle_threads[thread_num].join();
         }
 
         // populate the array to decide the best action and get the total value
         double totalDiscountedValue = 0;
-        cout << "Assigning A star per particle number: " << endl;
+        //cout << "Assigning A star per particle number: " << endl;
         for (int i = 0; i < particles.size(); i++) {
             const environment * environment_state = static_cast<const environment *>(particles[i]);
             action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
