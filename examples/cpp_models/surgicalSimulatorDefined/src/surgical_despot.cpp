@@ -398,7 +398,6 @@ public:
         // create a list where the index is the action number and the value is the weight towards that  action
         double action_weight_array[surgicalDespot_m->NumActions()];
         ACT_TYPE particle_chosen_action; 
-        std::vector<ACT_TYPE> astar_found_path_actions;
 
         //create a list of threads
         std::thread all_particle_threads[particles.size()];
@@ -451,6 +450,113 @@ public:
         return policy_action;
     }
 };
+/*
+* ***********************************************************************************
+* Astar based SCENARIO LOWER BOUND - Multi threaded support
+* ***********************************************************************************
+*/
+static void multi_thread_Astar_getbestactionvalue(const environment &planning_environment, ACT_TYPE &best_action, double &best_discounted_value) {
+    /*
+    * Function to enable multi thread planning with A star
+    * args:
+    *   - planning_environment: environment object on which to do A star
+    * returns: by pass by reference
+    *   - best_action: the best action to take as the first action in that planning environment
+    *   - best_value: the discounted value of the Astar algorithm - including the terminal reward
+    */
+    astar_planner planner;
+    vector<ACT_TYPE>astar_found_path_actions;
+    planner.plan_a_star(planning_environment);
+    planner.get_path(astar_found_path_actions);
+    best_action = astar_found_path_actions[0];
+    best_discounted_value = planner.get_discounted_goal_value(astar_found_path_actions);
+    return;
+}
+
+class SurgicalDespotAstarScenarioLowerBound: public ScenarioLowerBound {
+private:
+    const SurgicalDespot *surgicalDespot_m;
+public: 
+    SurgicalDespotAstarScenarioLowerBound(const DSPOMDP* model): ScenarioLowerBound(model) {
+        /*
+        * Default constructor for the Astar based scenario lower bound
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+    }
+
+    ValuedAction Value(const vector<State*>& particles, RandomStreams& streams, History& history) const {
+        /*
+        * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
+        * also returns the first action that is needed to get that value using an A star based policy. The action
+        *  
+        * Methodology: Do A star on all the environments in the blief and based on that take the 
+        * best action based on the votes based off of the action that has the "most" particle weight
+        * behind it 
+        * - if two environments are the same - don't redo A star and just use the last A star's value
+        */ 
+        astar_planner planner;
+
+        // map to store the A star values of particles 
+        std::map<environment, std::pair<ACT_TYPE, double>> astar_best_actionvalue_map;
+        // create a list where the index is the action number and the value is the weight towards that  action
+        double action_weight_array[surgicalDespot_m->NumActions()];
+
+        //create a list of threads
+        std::thread all_particle_threads[particles.size()];
+        int num_created_threads = 0; // number of threads created to decide for joining.
+        ACT_TYPE default_init_action = 0; // default action to initialize the map
+        double default_init_value = 0; // default value to initialize the map
+
+        // loop to spawn all threads
+        cout << "Spawning A star threads: " << endl;
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            if (particle_num%10 == 0 || particle_num == particles.size() - 1) {
+                cout << particle_num << ", " << endl;
+            } else {
+                cout << particle_num << ", ";
+            }
+
+            const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
+            std::map<environment, std::pair<ACT_TYPE, double>>::iterator it = astar_best_actionvalue_map.find(*environment_state);
+            if (it == astar_best_actionvalue_map.cend()) {
+                // spawn a thread to run Astar for this environment
+                astar_best_actionvalue_map[*environment_state].first = default_init_action;
+                astar_best_actionvalue_map[*environment_state].second = default_init_value;
+                all_particle_threads[num_created_threads] = std::thread(multi_thread_Astar_getbestactionvalue, std::ref(*environment_state), 
+                    std::ref(astar_best_actionvalue_map[*environment_state].first), std::ref(astar_best_actionvalue_map[*environment_state].second));
+                num_created_threads++;
+            } else {
+                // have already spawned a thread for this environment
+                continue;
+            }
+        }
+
+        // wait for all the threads to join
+        cout << "Waiting for Astar threads to join: " << endl;
+        for (int thread_num = 0; thread_num < num_created_threads; thread_num++) {
+            if (thread_num%10 == 0 || thread_num == particles.size() - 1) {
+                cout << thread_num << ", " << endl;
+            } else {
+                cout << thread_num << ", ";
+            }
+            all_particle_threads[thread_num].join();
+        }
+
+        // populate the array to decide the best action and get the total value
+        double totalDiscountedValue = 0;
+        cout << "Assigning A star per particle number: " << endl;
+        for (int i = 0; i < particles.size(); i++) {
+            const environment * environment_state = static_cast<const environment *>(particles[i]);
+            action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
+            totalDiscountedValue += (environment_state->weight*astar_best_actionvalue_map[*environment_state].second);
+        }
+        
+        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+        ValuedAction retValuedAction(best_action, totalDiscountedValue);
+        return retValuedAction; 
+    }
+};
+
 
 /*
 * ***********************************************************************************
@@ -953,17 +1059,23 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
     * Creates the lower bound for the TagNikhil class. 
     */ 
     const DSPOMDP *model = this;
-    if (name == "TRIVIAL" || name == "DEFAULT" || name == "ASTAR") {
+    if (name == "TRIVIAL" || name == "DEFAULT" || name == "SCHR") {
         // Use the smart history based default rollout policy to create the lower bound
         //return new TagNikhilHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
         // the create particle lower bound function is in DSPOMDP or pomdp files - uses the GetBestAction to create a trivial lower bound
         
-        cout << "TODO: CHANGE THIS BACK TO A STAR AFTER TESTING SCHR" << endl;
-        return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
+        //cout << "TODO: CHANGE THIS BACK TO A STAR AFTER TESTING SCHR" << endl;
+        //return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
         
+        cout << "CREATED A STAR LOWER BOUND " << endl << endl;
+        return new SurgicalDespotAstarScenarioLowerBound(model);
+
         //cout << "create Astar multi threaded based lower bound" << endl;
         //return new SurgicalDespotAstarMultiThreadPolicy(model, CreateParticleLowerBound(particle_bound_name));
         //return new SurgicalDespotAstarPolicy(model, CreateParticleLowerBound(particle_bound_name));
+    } else if (name == "ASTAR") {
+        cout << "CREATED A STAR LOWER BOUND " << endl << endl;
+        return new SurgicalDespotAstarScenarioLowerBound(model);
     } else if (name == "SCHR") {
         return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name)); 
     } else if (name == "SHR") {

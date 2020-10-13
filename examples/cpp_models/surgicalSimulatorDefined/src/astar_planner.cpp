@@ -140,6 +140,41 @@ double astar_planner::get_goal_cost() {
     return g_dict_m[goal_state_m];
 }
 
+double astar_planner::get_discounted_goal_value(vector<ACT_TYPE>&all_path_actions) {
+    /*
+    * Get the discounted value of getting to the goal - this includes the reward state. 
+    * This is done by forward simulating the start state with the path actions and keeping track
+    * of the discounted reward. 
+    * 
+    * args:
+    *   - all_path_actions: the output of get_path after plan_a_star
+    * returns:
+    *   - discounted value: including the terminal reward
+    */ 
+    
+    environment test_environment_state = start_state_m;
+    float stepCost = 0;
+    double discountedStepCost;
+    double totalValue = 0;
+    robotArmActions action_array[NUM_ROBOT_ARMS_g];
+    bool error;
+    for (int path_action_num = 0; path_action_num < all_path_actions.size(); path_action_num++) {
+        test_environment_state.step(action_array, error, stepCost);
+        discountedStepCost = -(1 - Globals::Discount(path_action_num)) / (1 - Globals::Discount())
+				+ static_cast<double>(stepCost) * Globals::Discount(path_action_num);
+
+        totalValue += (-discountedStepCost);
+    }
+    if (test_environment_state.at_goal()) {
+        // add the discounted terminal reward
+        totalValue += -(1 - Globals::Discount(all_path_actions.size() - 1)) / (1 - Globals::Discount())
+				+ static_cast<double>(TERMINAL_REWARD_g) * Globals::Discount(all_path_actions.size() - 1);
+    }
+
+    return totalValue;
+
+}
+
 void astar_planner::plan_a_star(const environment &start_environment_state, bool verbose) {
     /*
     * Does the entire A star planning algorithm.

@@ -345,7 +345,7 @@ float obstacle::deformation_cost() const{
     */
     float old_potential_energy = (0.5) * k_m * pow((old_center_m.y - orig_center_m.y), 2);
     float new_potential_energy = (0.5) * k_m * pow((center_m.y - orig_center_m.y), 2);
-    float stage_cost = abs(new_potential_energy - old_potential_energy);
+    float stage_cost = abs(new_potential_energy);//abs(new_potential_energy - old_potential_energy);
 
     return stage_cost;
 }
