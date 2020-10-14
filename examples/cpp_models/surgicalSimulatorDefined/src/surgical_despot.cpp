@@ -955,11 +955,48 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
             cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 or 4 OBSTACLES AT THE MOMENT" << endl;
             exit(1);
         }
+        
+        const environment *environment_start_state = static_cast<const environment *>(start);
+        float start_state_obs_ks[NUM_OBSTACLES_g];
+        environment_start_state->get_obstacle_ks(start_state_obs_ks, NUM_OBSTACLES_g);
+        double particle_weight;
+
         if (NUM_OBSTACLES_g == 3) {
             float init_obstacle_ks[NUM_OBSTACLES_g];
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
                     for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
+                        
+                        if (INITIAL_BELIEF_TYPE_g == "TRUE_CLASS") {
+                            // TRUE CLASS STRATEGY
+                            particle_weight = 1;
+                            // obstacle 1
+                            if (all_possible_obs_ks_g[obs1] == start_state_obs_ks[0]) {
+                                particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                            } else {
+                                particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                            }
+                            // obstacle 2
+                            if (all_possible_obs_ks_g[obs2] == start_state_obs_ks[1]) {
+                                particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                            } else {
+                                particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                            }
+                            // obstacle 3
+                            if (all_possible_obs_ks_g[obs3] == start_state_obs_ks[2]) {
+                                particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                            } else {
+                                particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                            }
+                            
+                        } else if (INITIAL_BELIEF_TYPE_g == "CLASS_SET") {
+                            // CLASS SET STRATEGY
+                            particle_weight = class_set_init_belief_biased_distrib_g[obs1] * class_set_init_belief_biased_distrib_g[obs2] *
+                                class_set_init_belief_biased_distrib_g[obs3];
+                        } else {
+                            // DEFAULT
+                            particle_weight = uniform_particle_weight;
+                        }
                         new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
                         init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
                         init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
@@ -975,6 +1012,44 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
                     for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
                         for (int obs4 = 0; obs4 < NUM_OBS_K_CLASSES_g; obs4++) {
+
+                            if (INITIAL_BELIEF_TYPE_g == "TRUE_CLASS") {
+                                // TRUE CLASS STRATEGY
+                                particle_weight = 1;
+                                // obstacle 1
+                                if (all_possible_obs_ks_g[obs1] == start_state_obs_ks[0]) {
+                                    particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                                } else {
+                                    particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                                }
+                                // obstacle 2
+                                if (all_possible_obs_ks_g[obs2] == start_state_obs_ks[1]) {
+                                    particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                                } else {
+                                    particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                                }
+                                // obstacle 3
+                                if (all_possible_obs_ks_g[obs3] == start_state_obs_ks[2]) {
+                                    particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                                } else {
+                                    particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                                }
+                                // obstacle 4
+                                if (all_possible_obs_ks_g[obs4] == start_state_obs_ks[3]) {
+                                    particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                                } else {
+                                    particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                                }
+                                
+                            } else if (INITIAL_BELIEF_TYPE_g == "CLASS_SET") {
+                                // CLASS SET STRATEGY
+                                particle_weight = class_set_init_belief_biased_distrib_g[obs1] * class_set_init_belief_biased_distrib_g[obs2] *
+                                    class_set_init_belief_biased_distrib_g[obs3] * class_set_init_belief_biased_distrib_g[obs4];
+                            } else {
+                                // DEFAULT
+                                particle_weight = uniform_particle_weight;
+                            }
+
                             new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
                             init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
                             init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
