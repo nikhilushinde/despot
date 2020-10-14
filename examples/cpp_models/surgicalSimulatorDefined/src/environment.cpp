@@ -210,17 +210,18 @@ bool environment::init_environment(int height, int length, environmentCoords goa
     this->obstacle_radius_m = obstacle_radius;
     this->num_obstacles_m = num_obstacles;
 
+    // commented out to allow obstacles to overlap
     // TODO: THIS DOES NOT SEEM TO BE WORKING IN RETURNING AN ERROR CHECK THIS
     // check that there is no error that causes inter obstacle problems (eg: inter obstacle collisions) with the parameters
-    for (int i = 0; i < num_obstacles; i++) {
-        if (i == 0) {
-            continue;
-        }   
-        if (obstacle_center_x[i] - obstacle_center_x[i - 1] < obstacle_radius) {
-            error = true;
-            return error;
-        }
-    }
+    // for (int i = 0; i < num_obstacles; i++) {
+    //     if (i == 0) {
+    //         continue;
+    //     }   
+    //     if (obstacle_center_x[i] - obstacle_center_x[i - 1] < obstacle_radius) {
+    //         error = true;
+    //         return error;
+    //     }
+    // }
 
     environmentCoords init_orig_center; // initial center to use to initialize obstacle
     for (int i = 0; i < num_obstacles; i++) {
@@ -500,7 +501,8 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
             if (itr != end(all_possible_obs_ks_g)) {
                 true_k_index = distance(all_possible_obs_ks_g, itr);
             } else {
-                cerr << "ERROR: IN observe_classes: the k value of the obstacle " << obs_num << " was not valid - not in permissible set of obstacle k values" << endl;
+                cout << obstacles_m[obs_num].get_orig_center().x << ", " << obstacles_m[obs_num].get_orig_center().y << ", " << obstacles_m[obs_num].get_k() << endl; 
+                cerr << "ERROR: IN observe_classes: the k value of the obstacle " << obs_num << " was not valid - not in permissible set of obstacle k values: " << obstacles_m[obs_num].get_k() << endl;
                 exit(1);
             }
             class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB;
