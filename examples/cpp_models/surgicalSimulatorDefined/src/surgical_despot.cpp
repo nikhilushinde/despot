@@ -900,12 +900,12 @@ State* SurgicalDespot::CreateStartState(std::string type) const {
     * returns:
     *   - pointer of type state to the random state object that was created in dynamic memory
     */ 
-    double rand_num;
-    int current_obs_k_index;
-    float init_obstacle_ks[NUM_OBSTACLES_g];
-    double probabilityDistrib[NUM_OBS_K_CLASSES_g];
-    double uniform_probability = 1.0/static_cast<double>(NUM_OBS_K_CLASSES_g);
-    std::fill(probabilityDistrib, probabilityDistrib + NUM_OBS_K_CLASSES_g, uniform_probability);
+    //double rand_num;
+    //int current_obs_k_index;
+    //float init_obstacle_ks[NUM_OBSTACLES_g];
+    //double probabilityDistrib[NUM_OBS_K_CLASSES_g];
+    //double uniform_probability = 1.0/static_cast<double>(NUM_OBS_K_CLASSES_g);
+    //std::fill(probabilityDistrib, probabilityDistrib + NUM_OBS_K_CLASSES_g, uniform_probability);
 
     environment *new_env = new environment();
 
@@ -918,9 +918,11 @@ State* SurgicalDespot::CreateStartState(std::string type) const {
     new_env->set_obstacle_ks(init_obstacle_ks);
     */
 
+    float init_obstacle_ks[NUM_OBSTACLES_g];
+    new_env->get_obstacle_ks(init_obstacle_ks, NUM_OBSTACLES_g);
     cout << "Created start state with initial obstacle ks: ";
     for (int i = 0; i < NUM_OBSTACLES_g; i++) {
-        cout << init_obstacle_ks[i] << ", ";
+        cout <<  init_obstacle_ks[i] << ", ";
     }
     cout << endl;
     cout << "is start state at goal: " << new_env->at_goal() << endl;
