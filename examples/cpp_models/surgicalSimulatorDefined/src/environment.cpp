@@ -709,7 +709,8 @@ void environment::step(const robotArmActions *actions, bool &error, float &cost)
 
     // step the robot arm 
     robObj_m.step(actions, xy_step_size_m, theta_deg_step_size_m, error, temp_cost);
-    cost += temp_cost;
+    cost = temp_cost;
+
     if (error) {
         if (debug_m) {
             cout << "ERROR: error occurred in ROBOT object step" << endl;
