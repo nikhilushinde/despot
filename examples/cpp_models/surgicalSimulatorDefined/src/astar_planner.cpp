@@ -159,20 +159,26 @@ double astar_planner::get_discounted_goal_value(vector<ACT_TYPE>&all_path_action
     robotArmActions action_array[NUM_ROBOT_ARMS_g];
     bool error;
     for (int path_action_num = 0; path_action_num < all_path_actions.size(); path_action_num++) {
+
+        int_to_action_array_g(all_path_actions[path_action_num], action_array, NUM_ROBOT_ARMS_g);
         test_environment_state.step(action_array, error, stepCost);
-        discountedStepCost = -(1 - Globals::Discount(path_action_num)) / (1 - Globals::Discount())
-				+ static_cast<double>(stepCost) * Globals::Discount(path_action_num);
+        discountedStepCost = Globals::Discount(path_action_num)*stepCost;
 
         totalValue += (-discountedStepCost);
+
+        //cout << "action number: " << path_action_num << endl;
+        //cout << "step cost: " << -stepCost << ", discounted step cost" << -discountedStepCost << ", totalValue: " << totalValue << endl;
     }
     if (test_environment_state.at_goal()) {
-        // add the discounted terminal reward
-        totalValue += -(1 - Globals::Discount(all_path_actions.size() - 1)) / (1 - Globals::Discount())
-				+ static_cast<double>(TERMINAL_REWARD_g) * Globals::Discount(all_path_actions.size() - 1);
+        // add the discounted terminal reward - at size() - 1 as this reward is received at the last step and steps are indexed at 0
+        totalValue += static_cast<double>(TERMINAL_REWARD_g) * Globals::Discount(all_path_actions.size() - 1);
+    } else {
+        cerr << "AStar did not complete - should have reached the goal" << endl;
+        exit(1);
     }
 
+    //cout << "ASTAR return totalValue:  " << totalValue << endl;
     return totalValue;
-
 }
 
 void astar_planner::plan_a_star(const environment &start_environment_state, bool verbose) {
