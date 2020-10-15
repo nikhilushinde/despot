@@ -6,6 +6,8 @@
 */
 using namespace despot;
 using std::vector;
+using std::cout;
+using std::endl;
 
 int main() {
     environment test_environment;
@@ -33,6 +35,12 @@ int main() {
         // render the environment
         Renderer.render_environment(test_environment, 50);
     }   
+
+    cout << "get NON discounted goal cost: " << planner.get_goal_cost() << endl;
+    cout << "get discounted value: " << planner.get_discounted_goal_value(actions_to_goal) << endl;
+    cout << "the terminal reward alone is: " << TERMINAL_REWARD_g << endl;
+    cout << "the discount factor is: " << Globals::Discount(1) << endl;
+    cout << "environment is at goal: " << planner.is_goal(test_environment) << endl;
 
     return 0;
 }
