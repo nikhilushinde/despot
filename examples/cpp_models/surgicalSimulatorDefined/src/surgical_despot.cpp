@@ -605,8 +605,16 @@ public:
         const environment* environment_state = static_cast<const environment*>(&s);
         double dist = EuclideanDistanceCalc(*environment_state);
         int steps_to_goal = ceil(dist/XY_STEP_SIZE_g);
-        double discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
-            TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+
+        double discountedValue;
+        if (USE_CONSTANT_MOVEMENT_COST_g) {
+            discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
+                TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+        } else {
+            // if not using constant cost just return discounted terminal reward assuming no stage costs.  
+            discountedValue = TERMINAL_REWARD_g * Globals::Discount(steps_to_goal - 1);
+        }
+        
         return discountedValue;
     }
 
@@ -629,8 +637,14 @@ public:
             
             dist = EuclideanDistanceCalc(*environment_state);
             int steps_to_goal = ceil(dist/XY_STEP_SIZE_g);
-            double discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
-                TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+            double discountedValue;
+            if (USE_CONSTANT_MOVEMENT_COST_g) {
+                discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
+                    TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+            } else {
+                // if not using constant cost just return discounted terminal reward assuming no stage costs.  
+                discountedValue = TERMINAL_REWARD_g * Globals::Discount(steps_to_goal - 1);
+            }
             totalValue += discountedValue;
         }
         return totalValue;
