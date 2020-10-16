@@ -526,6 +526,7 @@ public:
                 astar_best_actionvalue_map[*environment_state].second = default_init_value;
                 all_particle_threads[num_created_threads] = std::thread(multi_thread_Astar_getbestactionvalue, std::ref(*environment_state), 
                     std::ref(astar_best_actionvalue_map[*environment_state].first), std::ref(astar_best_actionvalue_map[*environment_state].second));
+                
                 num_created_threads++;
             } else {
                 // have already spawned a thread for this environment
@@ -1011,7 +1012,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                             // DEFAULT
                             particle_weight = uniform_particle_weight;
                         }
-                        new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
+                        new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
                         init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
                         init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
                         init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
@@ -1064,7 +1065,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                                 particle_weight = uniform_particle_weight;
                             }
 
-                            new_particle_state = static_cast<environment *>(Allocate(-1, uniform_particle_weight));
+                            new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
                             init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
                             init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
                             init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
@@ -1076,7 +1077,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                 }
             }
         }
-        
+
         cout << "Total number of particles created: " << particles.size() << endl;
         return new ParticleBelief(particles, this);
     } else {
