@@ -304,7 +304,7 @@ public:
         // map to store the A star values of particles 
         std::map<environment, ACT_TYPE> astar_best_action_map;
         // create a list where the index is the action number and the value is the weight towards that  action
-        double action_weight_array[surgicalDespot_m->NumActions()];
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
         ACT_TYPE particle_chosen_action; 
         std::vector<ACT_TYPE> astar_found_path_actions;
         
@@ -396,7 +396,7 @@ public:
         // map to store the A star values of particles 
         std::map<environment, ACT_TYPE> astar_best_action_map;
         // create a list where the index is the action number and the value is the weight towards that  action
-        double action_weight_array[surgicalDespot_m->NumActions()];
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
         ACT_TYPE particle_chosen_action; 
 
         //create a list of threads
@@ -439,14 +439,14 @@ public:
         }
 
         // populate the array to decide the best action
-        cout << "Assigning A star per particle number: " << endl;
+        //cout << "Assigning A star per particle number: " << endl;
         for (int i = 0; i < particles.size(); i++) {
             const environment * environment_state = static_cast<const environment *>(particles[i]);
             action_weight_array[astar_best_action_map[*environment_state]] += environment_state->weight;
         }
 
         ACT_TYPE policy_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
-        cout << "Found Astar policy action: " << policy_action;
+        //cout << "Found Astar policy action: " << policy_action;
         return policy_action;
     }
 };
@@ -499,7 +499,7 @@ public:
         // map to store the A star values of particles 
         std::map<environment, std::pair<ACT_TYPE, double>> astar_best_actionvalue_map;
         // create a list where the index is the action number and the value is the weight towards that  action
-        double action_weight_array[surgicalDespot_m->NumActions()];
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
 
         //create a list of threads
         std::thread all_particle_threads[particles.size()];
@@ -549,8 +549,46 @@ public:
             totalDiscountedValue += (environment_state->weight*astar_best_actionvalue_map[*environment_state].second);
         }
 
+        /*    
+        // TODO: REMOVE THIS
+        bool found_one = false;
+        cout << endl << endl;
+        cout << "printing the weights"; 
+        for (int action = 0; action < 6; action ++) {
+            if (action == 0) {
+                cout << "xRight: ";
+            } else if (action == 1) {
+                cout << "xLeft: ";
+            } else if (action == 2) {
+                cout << "yUp: ";
+            } else if (action == 3) {
+                cout << "yDown: ";
+            } else if (action == 4) {
+                cout << "thetaUp: ";
+            } else if (action == 5) {
+                cout << "thetaDown: ";
+            }
+            cout << action_weight_array[action] << ": " << (action_weight_array[action] > 0.00001) << ", ";
+            if (action_weight_array[action] >= 0.0000001) {
+                found_one = true;
+            }   
+        }
+        if (!found_one) {
+            cerr << "no values were really set properly!!!!!!!!!!!!" << endl;
+            exit(1);
+        }
+        cout << endl << endl << endl;
+        // TODO: REMOVE THIS END
+        */
+
+        // TODO: REMOVE THIS
+        //const environment *printenv = static_cast<const environment *>(particles[0]);
+        //printenv->robObj_m.printState();
+
         ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
         ValuedAction retValuedAction(best_action, totalDiscountedValue);
+
+        //cout << "A STAR LOWER BOUND RETURNED VALUED ACTION: " << retValuedAction.action << ", " << retValuedAction.value << endl;
         return retValuedAction; 
     }
 };
@@ -858,6 +896,8 @@ bool SurgicalDespot::Step(State& state, double rand_num, ACT_TYPE action, double
 
     // set up
     environment *environment_state = static_cast<environment*>(&state);
+
+
     robotArmActions action_list[NUM_ROBOT_ARMS_g];
     int actionNum = static_cast<int>(action);
     int_to_action_array_g(actionNum, action_list, NUM_ROBOT_ARMS_g);
@@ -1012,12 +1052,16 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                             // DEFAULT
                             particle_weight = uniform_particle_weight;
                         }
-                        new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
-                        init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
-                        init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
-                        init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
-                        new_particle_state->set_obstacle_ks(init_obstacle_ks);
-                        particles.push_back(new_particle_state);
+
+                        // only add particle if it has a nonzero probability 
+                        if (particle_weight > 0) {
+                            new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
+                            init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                            init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
+                            init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
+                            new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                            particles.push_back(new_particle_state);
+                        }
                     }
                 }
             }
@@ -1065,20 +1109,22 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                                 particle_weight = uniform_particle_weight;
                             }
 
-                            new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
-                            init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
-                            init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
-                            init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
-                            init_obstacle_ks[3] = all_possible_obs_ks_g[obs4];
-                            new_particle_state->set_obstacle_ks(init_obstacle_ks);
-                            particles.push_back(new_particle_state);
+                            // only add particle if it has a nonzero probability 
+                            if (particle_weight > 0) {
+                                new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
+                                init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                                init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
+                                init_obstacle_ks[2] = all_possible_obs_ks_g[obs3];
+                                init_obstacle_ks[3] = all_possible_obs_ks_g[obs4];
+                                new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                                particles.push_back(new_particle_state);
+                            }
                         }
                     }
                 }
             }
         }
 
-        cout << "Total number of particles created: " << particles.size() << endl;
         return new ParticleBelief(particles, this);
     } else {
         cerr << "[TagNikhil::InitialBelief] Unsupported belief type: " << type << endl;
