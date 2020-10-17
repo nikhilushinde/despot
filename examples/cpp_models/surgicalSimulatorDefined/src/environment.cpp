@@ -116,7 +116,6 @@ environment::environment(const environment &environment_to_copy) {
     debug_m = environment_to_copy.debug_m;
     // this uses the camera copy constructor implicitly
     cam_m = environment_to_copy.cam_m;
-
 }
 
 /*
@@ -490,7 +489,7 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
     if (NUM_OBS_K_CLASSES_g == 1) {
         other_class_probability = 0;
     } else {
-        other_class_probability = (double)(1 - TRUE_CLASS_OBSERVATION_PROB) / (double) (NUM_OBS_K_CLASSES_g - 1);
+        other_class_probability = (double)(1 - TRUE_CLASS_OBSERVATION_PROB_g) / (double) (NUM_OBS_K_CLASSES_g - 1);
     }
     fill(class_probability_distrib, class_probability_distrib + NUM_OBS_K_CLASSES_g, other_class_probability);
 
@@ -505,7 +504,7 @@ void environment::observe_classes(float *ret_observed_classes, int ret_array_siz
                 cerr << "ERROR: IN observe_classes: the k value of the obstacle " << obs_num << " was not valid - not in permissible set of obstacle k values: " << obstacles_m[obs_num].get_k() << endl;
                 exit(1);
             }
-            class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB;
+            class_probability_distrib[true_k_index] = TRUE_CLASS_OBSERVATION_PROB_g;
 
             sampledRandomNum = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
             sampled_obs_k_index = randomNumToInt(class_probability_distrib, NUM_OBS_K_CLASSES_g, sampledRandomNum);
@@ -613,9 +612,9 @@ double environment::get_class_obs_prob(OBS_TYPE obs, ACT_TYPE action) const {
         
         if (current_obstacle_observed_kval != DEFAULT_NOTOBSERVED_OBS_K_g) {
             if (current_obstacle_observed_kval == obstacles_m[obs_num].get_k()) {
-                total_probability *= static_cast<double>(TRUE_CLASS_OBSERVATION_PROB);
+                total_probability *= static_cast<double>(TRUE_CLASS_OBSERVATION_PROB_g);
             } else {
-                total_probability *= (1.0 - static_cast<double>(TRUE_CLASS_OBSERVATION_PROB));
+                total_probability *= (1.0 - static_cast<double>(TRUE_CLASS_OBSERVATION_PROB_g));
             }
         }
 
@@ -704,9 +703,7 @@ void environment::step(const robotArmActions *actions, bool &error, float &cost)
     * this is a feature of each of the step functions of the subclasses and if an error is found later down 
     * the line the rollback feature can be used to guarantee this. 
     */ 
-
     float temp_cost = 0;
-
     // step the robot arm 
     robObj_m.step(actions, xy_step_size_m, theta_deg_step_size_m, error, temp_cost);
     cost = temp_cost;
@@ -748,7 +745,7 @@ void environment::step(const robotArmActions *actions, bool &error, float &cost)
             return;
         }
     }
-
+    
     // step the camera to the appropriate index
     cam_m.step_to_coord(robObj_m.arms_m[cam_m.get_corresponding_arm_index()].get_coords());
 
