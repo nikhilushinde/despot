@@ -546,10 +546,10 @@ public:
         for (int i = 0; i < particles.size(); i++) {
             const environment * environment_state = static_cast<const environment *>(particles[i]);
             action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
+            //action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight*astar_best_actionvalue_map[*environment_state].second;
             totalDiscountedValue += (environment_state->weight*astar_best_actionvalue_map[*environment_state].second);
         }
 
-        /*    
         // TODO: REMOVE THIS
         bool found_one = false;
         cout << endl << endl;
@@ -573,13 +573,8 @@ public:
                 found_one = true;
             }   
         }
-        if (!found_one) {
-            cerr << "no values were really set properly!!!!!!!!!!!!" << endl;
-            exit(1);
-        }
-        cout << endl << endl << endl;
+        cout << endl << endl;
         // TODO: REMOVE THIS END
-        */
 
         // TODO: REMOVE THIS
         //const environment *printenv = static_cast<const environment *>(particles[0]);
@@ -1124,6 +1119,10 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                 }
             }
         }
+
+        // TODO: REMOVE THIS
+        cout << "INITIAL BELIEF: the number of particles created: " << particles.size() << endl;
+        // TODO: END REMOVE THIS
 
         return new ParticleBelief(particles, this);
     } else {
