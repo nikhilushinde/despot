@@ -8,7 +8,7 @@ various parameters of the toy surgical simulator environment.
 NOTE: All variables defined in this file end in "_g" to 
 indicate that they are globally defined varibles. 
 */
-
+#include <string>
 
 namespace despot {
 
@@ -54,7 +54,7 @@ enum deflectionDirection {
 #define NUM_OBS_K_CLASSES_g 5 // number of possible classes for the k values of obstacles - NOTE MUST BE GREATER THAN 1
 #define NUM_OBS_CenterY_CLASSES_g 5 // number of possible classes for the initial y positions of the obstacles
 #define OBSTACLE_LIMIT_FLAG_g false // boolean indicating if the obstacles are to be limited vertically by the environment
-static const float all_possible_obs_ks_g[NUM_OBS_K_CLASSES_g] = {0.001, 1, 5, 10, 100};//{0.001, 1, 10,  1000,  5000}; // values of all possible k 
+static const float all_possible_obs_ks_g[NUM_OBS_K_CLASSES_g] = {0.00000000001, 10, 100, 10000, 1e6};;//{0.00000000001, 10, 100, 10000, 100000};//{0, 1, 5, 10, 100};//{0.001, 1, 5, 10, 100};//{0.001, 1, 10,  1000,  5000}; // values of all possible k 
 static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {180, 30, 100, 110, 150}; // values of all possible initial y centers of the obstacles
 #define DEFAULT_NOTOBSERVED_OBS_K_g 0 // default value to use for obstacle k when the obstacle is not observed. - should not be contained in all_possible_obs_ks_g
 
@@ -68,23 +68,26 @@ static const float all_possible_obs_ys_g[NUM_OBS_CenterY_CLASSES_g] = {180, 30, 
 // used for obstacle initialization
 #define OBSTACLE_RADIUS_g 25 // define single obstacle radius for all the obstacles
 //static const int all_obstacle_radiuses_g[NUM_OBSTACLES_g] = {30, 30, 30}; // the radiuses of each obstacle
-static const float all_obstacle_ks_g[NUM_OBSTACLES_g] = {100, 100, 1, 100};//{1000, 10, 100000, 10};//{100000, 100000, 100000, 10};//{1000, 10, 100000, 10};//{1000, 10, 5000}; // the k value of each obstacle
+static const float all_obstacle_ks_g[NUM_OBSTACLES_g] = {1e6, 1e6, 1e6, 1e-11};;//{0.00000000001, 1e6, 1e6, 1e-11};//{0.00000000001, 100000, 1e5, 1e-11};//{0.00000000001, 100000, 0.00000000001, 100000};//{0.00000000001, 100000, 100000, 0.00000000001};//{1000, 10, 100000, 10};//{100000, 100000, 100000, 10};//{1000, 10, 100000, 10};//{1000, 10, 5000}; // the k value of each obstacle
 static const float all_obstacle_center_x_g[NUM_OBSTACLES_g] = {31, 61, 101, 141}; // the x value of each obstacle
 static const float all_obstacle_center_y_g[NUM_OBSTACLES_g] = {190, 160, 130, 100}; // the initial y value of each obstacle
 
 
 // probability of observing the true obstacle class after interactions 
-#define TRUE_CLASS_OBSERVATION_PROB 0.9
+#define TRUE_CLASS_OBSERVATION_PROB_g 1//0.9//1//0.9
 
 // Initial Belief bias 
 #define INITIAL_BELIEF_TYPE_g "DEFAULT" // options: {"DEFAULT", "TRUE_CLASS", "CLASS_SET"}
 // "DEFAULT" - uniform prior over all obstacle class configurations for particles 
 
 // "TRUE_CLASS" - indicates to use the biasing strategy that changes the probability of a particle in the initial belief based on the true obstacle class of the true environment
-#define TRUE_INITIAL_BIAS_PROBABILITY_g 0.5 // dictates the probability of the true class in the biased initial belief
+#define TRUE_INITIAL_BIAS_PROBABILITY_g 0.25  //1//0.5 // dictates the probability of the true class in the biased initial belief
 
 // "CLASS_SET" - indicates to use the initial belief where for every obstacle the classes are biased to some given probability distribution - specified below
-static const double class_set_init_belief_biased_distrib_g[NUM_OBS_K_CLASSES_g] = {0.3, 0.3, 0.2, 0.1, 0.1}; // value at index i corresponds to the probability in the initial belief that class index i from the all possible classes is selected 
+static const double class_set_init_belief_biased_distrib_g[NUM_OBS_K_CLASSES_g] = {0.1, 0.0, 0.0, 0.1, 0.8};//;{0.1, 0.1, 0.2, 0.2, 0.4};//{0.4, 0.2, 0.2, 0.1, 0.1};//{0.1, 0.0, 0.0, 0.1, 0.8};;//{0.4, 0.2, 0.2, 0.1, 0.1}; // value at index i corresponds to the probability in the initial belief that class index i from the all possible classes is selected 
+
+
+// gets stuck with {0.1, 0.1, 0.2, 0.2, 0.4}, {0.2, 0.2, 0.2, 0.2, 0.2} causes it to get stuck ... , gets stuck with the DEFAULT that has uniform probability distribution
 
 /* 
 * ********************************************
@@ -110,12 +113,13 @@ static const deflectionDirection all_initial_deflection_directions[NUM_OBSTACLES
 #define NUM_ROBOT_ARMS_g 1 // the number of robot arms in the environment
 
 // used for robot arm initialization
-static const int all_robot_x_g[NUM_ROBOT_ARMS_g] = {0}; // the starting x coordinates of all the robot arms
-static const int all_robot_y_g[NUM_ROBOT_ARMS_g] = {80}; // the starting y coordinates of all the robot arms
+static const int all_robot_x_g[NUM_ROBOT_ARMS_g] = {30};//{0}; // the starting x coordinates of all the robot arms
+static const int all_robot_y_g[NUM_ROBOT_ARMS_g] = {80};//{80}; // the starting y coordinates of all the robot arms
 static const int all_robot_theta_deg_g[NUM_ROBOT_ARMS_g] = {0}; // the starting theta values in degrees of all the robot arms
 
 // Define deflection directions: relates the obstacles and robot arms
-static const deflectionDirection all_initial_deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g] = {{obs_none},{obs_none},{obs_none}};
+//static const deflectionDirection all_initial_deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g] = {{obs_above}, {obs_above}, {obs_above}, {obs_above}};
+static const deflectionDirection all_initial_deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g] = {{obs_none},{obs_none},{obs_none},{obs_none}};
 
 /* 
 * ********************************************
@@ -139,11 +143,11 @@ static const bool USE_CONSTANT_MOVEMENT_COST_g = true; // defines if the cost of
 #define MOVEMENT_ERROR 10000000 // cost for taking an action that resulted in an out of bounds error or collision error 
 #define ROBOT_MOVEMENT_ERROR_COST MOVEMENT_ERROR  // constant cost to return if there was an error in the robot movement 
 static const float OBSTACLE_ERROR_COST = MOVEMENT_ERROR; //define constant cost for error in obstacle manipulation
-#define TERMINAL_REWARD_g 1000000000000//1000000000
+#define TERMINAL_REWARD_g 100000000//1000000000
 
 
 // results related parameters
-static const std::string results_folder_name_g = "./results/astar_test/";//"./results/wall_astar_100000_100000_100000_10/";
+static const std::string results_folder_name_g = "./results/astar_test3_1e6_1e6_1e6_1e-11/";//"./results/wall_astar_100000_100000_100000_10/";
 
 
 /*
