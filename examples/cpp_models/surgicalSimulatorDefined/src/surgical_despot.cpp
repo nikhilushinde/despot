@@ -473,6 +473,38 @@ static void multi_thread_Astar_getbestactionvalue(const environment &planning_en
     return;
 }
 
+static void multi_thread_Astar_getbestvalue_w_initaction(const environment &planning_environment, ACT_TYPE init_action, double &best_discounted_value) {
+    /*
+    * Function to enable multi thread planning with A star
+    * args:
+    *   - planning_environment: environment object on which to do A star
+    *   - init_action: the initial action that the environment must take before planning with A star. 
+    * returns: by pass by reference
+    *   - best_action: the best action to take as the first action in that planning environment
+    *   - best_value: the discounted value of the Astar algorithm - including the terminal reward
+    */ 
+    environment init_action_stepped_environment = environment(planning_environment);
+    float init_cost = 0;
+    bool error = false;
+    robotArmActions init_action_array[NUM_ROBOT_ARMS_g];
+    int_to_action_array_g(init_action, init_action_array, NUM_ROBOT_ARMS_g);
+
+    init_action_stepped_environment.step(init_action_array, error, init_cost);
+    if (init_action_stepped_environment.at_goal()) {
+        best_discounted_value = TERMINAL_REWARD_g + (-init_cost);
+        return;
+    } else {
+        ACT_TYPE stepped_best_action = 0;
+        double stepped_best_discounted_value = 0;
+        multi_thread_Astar_getbestactionvalue(init_action_stepped_environment, stepped_best_action, stepped_best_discounted_value);
+        best_discounted_value = (-init_cost) + Globals::Discount()*stepped_best_discounted_value;
+        return;
+    }
+}
+
+// create a global map to to be used for the AstarScenarioLowerBound - used to globally store the values of the environment. 
+static std::map<environment, std::map<ACT_TYPE, double>>AstarScenario_env_value_map_g; 
+
 class SurgicalDespotAstarScenarioLowerBound: public ScenarioLowerBound {
 private:
     const SurgicalDespot *surgicalDespot_m;
@@ -484,8 +516,126 @@ public:
         surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
     }
 
+    ValuedAction Value_NOTMAPPED(const vector<State*>& particles, RandomStreams& streams, History& history) const {
+        /*
+        * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
+        * also returns the first action that is needed to get that value using an A star based policy. The action
+        *  
+        * Methodology: Do A star on all the environments after taking every possible action. This gives the value
+        * for each of these actions given the belief. Once all the values for every action with every particle are
+        * computed select the best action and return the action and its corresponding vlaue as a valuedAction pair
+        * - if two environments are the same - don't redo A star and just use the last A star's value. 
+        */ 
+
+        cout << endl << endl << "IN THE NEWLY MADE VALUE FUNCTION" << endl << endl;
+
+        astar_planner planner;
+
+        // map to store the values of particles given that a certain action was the first action
+        std::map<environment, std::map<ACT_TYPE, double>> astar_env_actionvalue_map;
+        
+        // create a list of threads
+        std::vector<std::thread> all_particle_threads;
+        double default_init_value = 0;
+
+        // loop to spawn all threads
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            std::map<environment, std::map<ACT_TYPE, double>>::iterator outer_it = astar_env_actionvalue_map.find(*environment_state);
+            if (outer_it == astar_env_actionvalue_map.cend()) {
+                // environment has not been encountered yet - spawn threads for a star
+                for (ACT_TYPE curr_action = 0; curr_action < surgicalDespot_m->NumActions(); curr_action++) {
+                    // initialize action to action_array map
+                    astar_env_actionvalue_map[*environment_state][curr_action] = default_init_value;
+                    all_particle_threads.push_back(std::thread(multi_thread_Astar_getbestvalue_w_initaction, std::ref(*environment_state), curr_action, std::ref(astar_env_actionvalue_map[*environment_state][curr_action])));
+                }
+            }
+        }
+
+        // wait for all the threads to join
+        for (int thread_num = 0; thread_num < all_particle_threads.size(); thread_num ++) {
+            all_particle_threads[thread_num].join();
+        }
+
+        // find the action with the best value
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                action_weight_array[action_num] += environment_state->weight*astar_env_actionvalue_map[*environment_state][action_num];
+            }
+        }
+
+        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+        double best_discounted_value = action_weight_array[best_action];
+
+        ValuedAction retValuedAction(best_action, best_discounted_value);
+        return retValuedAction; 
+    }
+
     ValuedAction Value(const vector<State*>& particles, RandomStreams& streams, History& history) const {
         /*
+        * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
+        * also returns the first action that is needed to get that value using an A star based policy. The action
+        *  
+        * Methodology: Do A star on all the environments after taking every possible action. This gives the value
+        * for each of these actions given the belief. Once all the values for every action with every particle are
+        * computed select the best action and return the action and its corresponding vlaue as a valuedAction pair
+        * - if two environments are the same - don't redo A star and just use the last A star's value. 
+        * 
+        * NOTE: USES GLOBAL MAP
+        */ 
+
+        cout << endl << endl << "IN THE NEWLY MADE VALUE MAPPED FUNCTION, MAP SIZE: " << AstarScenario_env_value_map_g.size() << endl;
+
+        astar_planner planner;
+
+        // create a list of threads
+        std::vector<std::thread> all_particle_threads;
+        double default_init_value = 0;
+
+        // loop to spawn all threads
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+
+            // check global map
+            if (AstarScenario_env_value_map_g.find(*environment_state) == AstarScenario_env_value_map_g.cend()) {
+                // environment has not been encountered yet - not in global map - spawn threads for a star
+                for (ACT_TYPE curr_action = 0; curr_action < surgicalDespot_m->NumActions(); curr_action++) {
+                    // initialize action to action_array map
+                    AstarScenario_env_value_map_g[*environment_state][curr_action] = default_init_value;
+                    all_particle_threads.push_back(std::thread(multi_thread_Astar_getbestvalue_w_initaction, std::ref(*environment_state), curr_action, std::ref(AstarScenario_env_value_map_g[*environment_state][curr_action])));
+                }
+            }
+            
+        }
+
+        // wait for all the threads to join
+        for (int thread_num = 0; thread_num < all_particle_threads.size(); thread_num ++) {
+            all_particle_threads[thread_num].join();
+        }
+
+        // find the action with the best value
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
+                action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
+            }
+        }
+
+        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+        double best_discounted_value = action_weight_array[best_action];
+
+        ValuedAction retValuedAction(best_action, best_discounted_value);
+        return retValuedAction; 
+    }
+
+
+    // ***************************** DO NOT USE THIS FUNCTION - INCORRECT BEHAVIOR *******************************
+    ValuedAction OldIncorrectValue(const vector<State*>& particles, RandomStreams& streams, History& history) const {
+        /*
+        NOTE: DO NOT USE - OUTPUTS INCORRECT LOWER BOUNDS
         * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
         * also returns the first action that is needed to get that value using an A star based policy. The action
         *  
@@ -493,7 +643,14 @@ public:
         * best action based on the votes based off of the action that has the "most" particle weight
         * behind it 
         * - if two environments are the same - don't redo A star and just use the last A star's value
+        * once this is done for the environments that did not choose the same best action - step the environment in the 
+        * direction of the best action - log the cost of that action, compute A star from that state and incorporate that
+        * into the the total value of the belief
         */ 
+
+        cerr << "INCORRECT VALUE FUNCTION: DO NOT USE " << endl;
+        exit(1);
+
         astar_planner planner;
 
         // map to store the A star values of particles 
@@ -508,16 +665,7 @@ public:
         double default_init_value = 0; // default value to initialize the map
 
         // loop to spawn all threads
-        //cout << "Spawning A star threads: " << endl;
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            /*
-            if (particle_num%10 == 0 || particle_num == particles.size() - 1) {
-                cout << particle_num << ", " << endl;
-            } else {
-                cout << particle_num << ", ";
-            }
-            */
-
             const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
             std::map<environment, std::pair<ACT_TYPE, double>>::iterator it = astar_best_actionvalue_map.find(*environment_state);
             if (it == astar_best_actionvalue_map.cend()) {
@@ -535,23 +683,48 @@ public:
         }
 
         // wait for all the threads to join
-        //cout << "Waiting for Astar threads to join: " << endl;
         for (int thread_num = 0; thread_num < num_created_threads; thread_num++) {
             all_particle_threads[thread_num].join();
         }
 
-        // populate the array to decide the best action and get the total value
-        double totalDiscountedValue = 0;
-        //cout << "Assigning A star per particle number: " << endl;
+        // populate the array to decide the best action 
         for (int i = 0; i < particles.size(); i++) {
             const environment * environment_state = static_cast<const environment *>(particles[i]);
-            action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
-            //action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight*astar_best_actionvalue_map[*environment_state].second;
-            totalDiscountedValue += (environment_state->weight*astar_best_actionvalue_map[*environment_state].second);
+            //action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
+            action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight*astar_best_actionvalue_map[*environment_state].second;
+        }
+        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+
+        // second round - perform A star to get the values of performing the best action on all particles
+        std::map<environment, double>value_map2; // map of environment to value of the environment after taking best action and doing A star. 
+        int num_created_threads_round2 = 0;
+        //robotArmActions best_action_array[NUM_ROBOT_ARMS_g];
+        //int_to_action_array_g(best_action, best_action_array, NUM_ROBOT_ARMS_g); 
+
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            std::map<environment, double>::iterator it = value_map2.find(*environment_state);
+            if (it == value_map2.cend() && astar_best_actionvalue_map[*environment_state].first == best_action) {
+                // this environment state already takes the best action as the first action
+                value_map2[*environment_state] = astar_best_actionvalue_map[*environment_state].second;
+            }
+            if (it == value_map2.cend()) {
+                // step the particle and use that cost to initialize the map - then spawn a thread to get the a star value
+                value_map2[*environment_state] = default_init_value;
+                all_particle_threads[num_created_threads_round2] = std::thread(multi_thread_Astar_getbestvalue_w_initaction, std::ref(*environment_state), 
+                    best_action, std::ref(value_map2[*environment_state]));
+                num_created_threads_round2;
+            }
+        }
+
+        // use the new map to compute the total discounted value 
+        double totalDiscountedValue = 0;
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            totalDiscountedValue += environment_state->weight*value_map2[*environment_state];
         }
 
         // TODO: REMOVE THIS
-        bool found_one = false;
         cout << endl << endl;
         cout << "printing the weights"; 
         for (int action = 0; action < 6; action ++) {
@@ -569,9 +742,6 @@ public:
                 cout << "thetaDown: ";
             }
             cout << action_weight_array[action] << ": " << (action_weight_array[action] > 0.00001) << ", ";
-            if (action_weight_array[action] >= 0.0000001) {
-                found_one = true;
-            }   
         }
         cout << endl << endl;
         // TODO: REMOVE THIS END
@@ -580,8 +750,9 @@ public:
         //const environment *printenv = static_cast<const environment *>(particles[0]);
         //printenv->robObj_m.printState();
 
-        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+        
         ValuedAction retValuedAction(best_action, totalDiscountedValue);
+        //ValuedAction retValuedAction(best_action, action_weight_array[best_action]);
 
         //cout << "A STAR LOWER BOUND RETURNED VALUED ACTION: " << retValuedAction.action << ", " << retValuedAction.value << endl;
         return retValuedAction; 
