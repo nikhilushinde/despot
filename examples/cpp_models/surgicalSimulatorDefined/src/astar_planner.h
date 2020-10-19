@@ -32,6 +32,8 @@ public:
     double get_discounted_goal_value(vector<ACT_TYPE>& all_path_actions); // computes the discounted value to get to the goal from the start state. 
     void plan_a_star(const environment &start_environment_state, bool verbose = false); // uses a star to plan path to goal. 
 
+    // DEBUGGING functions
+    double get_state_cost(const environment &environment_key); //returns the cost stored in g_dict_m of the given state
 
 private: // variables
     environment goal_state_m; // the goal state that was found - assigned in plan_a_star

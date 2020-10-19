@@ -158,6 +158,10 @@ double astar_planner::get_discounted_goal_value(vector<ACT_TYPE>&all_path_action
     double totalValue = 0;
     robotArmActions action_array[NUM_ROBOT_ARMS_g];
     bool error;
+
+    // TODO: REMOVE THIS   
+    double totalnondiscountedValue = 0;
+
     for (int path_action_num = 0; path_action_num < all_path_actions.size(); path_action_num++) {
 
         int_to_action_array_g(all_path_actions[path_action_num], action_array, NUM_ROBOT_ARMS_g);
@@ -166,18 +170,29 @@ double astar_planner::get_discounted_goal_value(vector<ACT_TYPE>&all_path_action
 
         totalValue += (-discountedStepCost);
 
+        //totalnondiscountedValue += -stepCost;
+
         //cout << "action number: " << path_action_num << endl;
         //cout << "step cost: " << -stepCost << ", discounted step cost" << -discountedStepCost << ", totalValue: " << totalValue << endl;
     }
+
+    //cout << "TOTAL_COST: " << totalValue << endl;
+
     if (test_environment_state.at_goal()) {
         // add the discounted terminal reward - at size() - 1 as this reward is received at the last step and steps are indexed at 0
         totalValue += static_cast<double>(TERMINAL_REWARD_g) * Globals::Discount(all_path_actions.size() - 1);
+
+        //totalnondiscountedValue += TERMINAL_REWARD_g;
+
+        //cout << "TERMINAL REWARD ADDED: " << static_cast<double>(TERMINAL_REWARD_g) * Globals::Discount(all_path_actions.size() - 1);
     } else {
         cerr << "AStar did not complete - should have reached the goal" << endl;
         exit(1);
     }
 
+    //cout << "total steps to goal: " << all_path_actions.size() << endl;
     //cout << "ASTAR return totalValue:  " << totalValue << endl;
+    //cout << "ASTAR return NON DISCOUNTED totalValue: " << totalnondiscountedValue << endl;
     return totalValue;
 }
 
@@ -266,6 +281,11 @@ void astar_planner::plan_a_star(const environment &start_environment_state, bool
         
         iter_count++;
     }
+}
+
+// DEBUGGING FUNCTIONS
+double astar_planner::get_state_cost(const environment &environment_key) {
+    return g_dict_m[environment_key];
 }
 
 
