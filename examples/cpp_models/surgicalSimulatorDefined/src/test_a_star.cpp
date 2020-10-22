@@ -87,18 +87,21 @@ int main() {
 		}
         cout << endl;
 
+        astar_planner childplanner;
+
         environment child_env = env;
         int_to_action_array_g(action, action_array, NUM_ROBOT_ARMS_g);
         child_env.step(action_array, error, cost);
 
         child_env.robObj_m.printState();
         cout << endl;
-        planner.plan_a_star(child_env, false);
+        childplanner.plan_a_star(child_env, false);
         actions_to_goal.clear();
-        planner.get_path(actions_to_goal);
+        childplanner.get_path(actions_to_goal);
 
-        cout << "get NON discounted goal cost: " << planner.get_goal_cost() << endl;
-        cout << "get discounted value: " << planner.get_discounted_goal_value(actions_to_goal) << endl;
+        cout << "cost to step to child: " << cost << endl;
+        cout << "get NON discounted goal cost: " << childplanner.get_goal_cost() << endl;
+        cout << "get discounted value: " << childplanner.get_discounted_goal_value(actions_to_goal) << endl;
         cout << "the terminal reward alone is: " << TERMINAL_REWARD_g << endl;
 
         cout << endl << endl << endl;
