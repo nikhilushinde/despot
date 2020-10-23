@@ -516,63 +516,6 @@ public:
         surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
     }
 
-    ValuedAction Value_NOTMAPPED(const vector<State*>& particles, RandomStreams& streams, History& history) const {
-        /*
-        * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
-        * also returns the first action that is needed to get that value using an A star based policy. The action
-        *  
-        * Methodology: Do A star on all the environments after taking every possible action. This gives the value
-        * for each of these actions given the belief. Once all the values for every action with every particle are
-        * computed select the best action and return the action and its corresponding vlaue as a valuedAction pair
-        * - if two environments are the same - don't redo A star and just use the last A star's value. 
-        */ 
-
-        cout << endl << endl << "IN THE NEWLY MADE VALUE FUNCTION" << endl << endl;
-
-        astar_planner planner;
-
-        // map to store the values of particles given that a certain action was the first action
-        std::map<environment, std::map<ACT_TYPE, double>> astar_env_actionvalue_map;
-        
-        // create a list of threads
-        std::vector<std::thread> all_particle_threads;
-        double default_init_value = 0;
-
-        // loop to spawn all threads
-        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
-            std::map<environment, std::map<ACT_TYPE, double>>::iterator outer_it = astar_env_actionvalue_map.find(*environment_state);
-            if (outer_it == astar_env_actionvalue_map.cend()) {
-                // environment has not been encountered yet - spawn threads for a star
-                for (ACT_TYPE curr_action = 0; curr_action < surgicalDespot_m->NumActions(); curr_action++) {
-                    // initialize action to action_array map
-                    astar_env_actionvalue_map[*environment_state][curr_action] = default_init_value;
-                    all_particle_threads.push_back(std::thread(multi_thread_Astar_getbestvalue_w_initaction, std::ref(*environment_state), curr_action, std::ref(astar_env_actionvalue_map[*environment_state][curr_action])));
-                }
-            }
-        }
-
-        // wait for all the threads to join
-        for (int thread_num = 0; thread_num < all_particle_threads.size(); thread_num ++) {
-            all_particle_threads[thread_num].join();
-        }
-
-        // find the action with the best value
-        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
-        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
-            for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
-                action_weight_array[action_num] += environment_state->weight*astar_env_actionvalue_map[*environment_state][action_num];
-            }
-        }
-
-        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
-        double best_discounted_value = action_weight_array[best_action];
-
-        ValuedAction retValuedAction(best_action, best_discounted_value);
-        return retValuedAction; 
-    }
-
     ValuedAction Value(const vector<State*>& particles, RandomStreams& streams, History& history) const {
         /*
         * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
@@ -586,7 +529,7 @@ public:
         * NOTE: USES GLOBAL MAP
         */ 
 
-        cout << endl << endl << "IN THE NEWLY MADE VALUE MAPPED FUNCTION, MAP SIZE: " << AstarScenario_env_value_map_g.size() << endl;
+        //cout << endl << endl << "IN THE NEWLY MADE VALUE MAPPED FUNCTION, MAP SIZE: " << AstarScenario_env_value_map_g.size() << endl;
 
         astar_planner planner;
 
@@ -617,111 +560,20 @@ public:
 
         // find the action with the best value
         double action_weight_array[surgicalDespot_m->NumActions()] = {0};
+        
+        //TODO: REMOVE
+        cout << "action weight  array: ";
+        for (int i = 0; i < surgicalDespot_m->NumActions(); i++) {
+            cout << action_weight_array[i] << ", ";
+        }
+        cout << endl;
+        //TODO: END REMOVE
+
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
             const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
             for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
                 action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
             }
-        }
-
-        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
-        double best_discounted_value = action_weight_array[best_action];
-
-        ValuedAction retValuedAction(best_action, best_discounted_value);
-        return retValuedAction; 
-    }
-
-
-    // ***************************** DO NOT USE THIS FUNCTION - INCORRECT BEHAVIOR *******************************
-    ValuedAction OldIncorrectValue(const vector<State*>& particles, RandomStreams& streams, History& history) const {
-        /*
-        NOTE: DO NOT USE - OUTPUTS INCORRECT LOWER BOUNDS
-        * Computes the value of the lower bound given the scenario that is expressed by the vector of weighted particles
-        * also returns the first action that is needed to get that value using an A star based policy. The action
-        *  
-        * Methodology: Do A star on all the environments in the blief and based on that take the 
-        * best action based on the votes based off of the action that has the "most" particle weight
-        * behind it 
-        * - if two environments are the same - don't redo A star and just use the last A star's value
-        * once this is done for the environments that did not choose the same best action - step the environment in the 
-        * direction of the best action - log the cost of that action, compute A star from that state and incorporate that
-        * into the the total value of the belief
-        */ 
-
-        cerr << "INCORRECT VALUE FUNCTION: DO NOT USE " << endl;
-        exit(1);
-
-        astar_planner planner;
-
-        // map to store the A star values of particles 
-        std::map<environment, std::pair<ACT_TYPE, double>> astar_best_actionvalue_map;
-        // create a list where the index is the action number and the value is the weight towards that  action
-        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
-
-        //create a list of threads
-        std::thread all_particle_threads[particles.size()];
-        int num_created_threads = 0; // number of threads created to decide for joining.
-        ACT_TYPE default_init_action = 0; // default action to initialize the map
-        double default_init_value = 0; // default value to initialize the map
-
-        // loop to spawn all threads
-        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            const environment * environment_state = static_cast<const environment *>(particles[particle_num]);
-            std::map<environment, std::pair<ACT_TYPE, double>>::iterator it = astar_best_actionvalue_map.find(*environment_state);
-            if (it == astar_best_actionvalue_map.cend()) {
-                // spawn a thread to run Astar for this environment
-                astar_best_actionvalue_map[*environment_state].first = default_init_action;
-                astar_best_actionvalue_map[*environment_state].second = default_init_value;
-                all_particle_threads[num_created_threads] = std::thread(multi_thread_Astar_getbestactionvalue, std::ref(*environment_state), 
-                    std::ref(astar_best_actionvalue_map[*environment_state].first), std::ref(astar_best_actionvalue_map[*environment_state].second));
-                
-                num_created_threads++;
-            } else {
-                // have already spawned a thread for this environment
-                continue;
-            }
-        }
-
-        // wait for all the threads to join
-        for (int thread_num = 0; thread_num < num_created_threads; thread_num++) {
-            all_particle_threads[thread_num].join();
-        }
-
-        // populate the array to decide the best action 
-        for (int i = 0; i < particles.size(); i++) {
-            const environment * environment_state = static_cast<const environment *>(particles[i]);
-            //action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight;
-            action_weight_array[astar_best_actionvalue_map[*environment_state].first] += environment_state->weight*astar_best_actionvalue_map[*environment_state].second;
-        }
-        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
-
-        // second round - perform A star to get the values of performing the best action on all particles
-        std::map<environment, double>value_map2; // map of environment to value of the environment after taking best action and doing A star. 
-        int num_created_threads_round2 = 0;
-        //robotArmActions best_action_array[NUM_ROBOT_ARMS_g];
-        //int_to_action_array_g(best_action, best_action_array, NUM_ROBOT_ARMS_g); 
-
-        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
-            std::map<environment, double>::iterator it = value_map2.find(*environment_state);
-            if (it == value_map2.cend() && astar_best_actionvalue_map[*environment_state].first == best_action) {
-                // this environment state already takes the best action as the first action
-                value_map2[*environment_state] = astar_best_actionvalue_map[*environment_state].second;
-            }
-            if (it == value_map2.cend()) {
-                // step the particle and use that cost to initialize the map - then spawn a thread to get the a star value
-                value_map2[*environment_state] = default_init_value;
-                all_particle_threads[num_created_threads_round2] = std::thread(multi_thread_Astar_getbestvalue_w_initaction, std::ref(*environment_state), 
-                    best_action, std::ref(value_map2[*environment_state]));
-                num_created_threads_round2;
-            }
-        }
-
-        // use the new map to compute the total discounted value 
-        double totalDiscountedValue = 0;
-        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
-            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
-            totalDiscountedValue += environment_state->weight*value_map2[*environment_state];
         }
 
         // TODO: REMOVE THIS
@@ -746,17 +598,15 @@ public:
         cout << endl << endl;
         // TODO: REMOVE THIS END
 
-        // TODO: REMOVE THIS
-        //const environment *printenv = static_cast<const environment *>(particles[0]);
-        //printenv->robObj_m.printState();
+        ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
+        double best_discounted_value = action_weight_array[best_action];
 
-        
-        ValuedAction retValuedAction(best_action, totalDiscountedValue);
-        //ValuedAction retValuedAction(best_action, action_weight_array[best_action]);
-
-        //cout << "A STAR LOWER BOUND RETURNED VALUED ACTION: " << retValuedAction.action << ", " << retValuedAction.value << endl;
+        ValuedAction retValuedAction(best_action, best_discounted_value);
         return retValuedAction; 
     }
+
+
+    
 };
 
 
@@ -789,10 +639,10 @@ public:
         environmentCoords env_state_goal_coord;
         environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
 
-        double min_dist;
-        double arm_dist; 
-        float x;
-        float y;
+        double min_dist = Globals::POS_INFTY;
+        double arm_dist = 0; 
+        float x = 0;
+        float y = 0;
         env_state_goal_coord = environment_state.get_goal_coord();
         for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
             x = static_cast<float>(env_state_robot_coords[arm_num].x);
@@ -801,6 +651,9 @@ public:
             arm_dist = static_cast<double>(sqrt(pow(x - env_state_goal_coord.x, 2) + pow(y - env_state_goal_coord.y, 2))) 
                 - static_cast<double>(environment_state.get_goal_radius());
             arm_dist = std::min(std::max(arm_dist, static_cast<double>(0)), min_dist);
+            if (arm_dist < min_dist) {
+                arm_dist = min_dist;
+            }
         }
         return min_dist;
     }
@@ -850,7 +703,7 @@ public:
                 // if not using constant cost just return discounted terminal reward assuming no stage costs.  
                 discountedValue = TERMINAL_REWARD_g * Globals::Discount(steps_to_goal - 1);
             }
-            totalValue += discountedValue;
+            totalValue += environment_state->weight*discountedValue;
         }
         return totalValue;
     }
@@ -936,6 +789,7 @@ static void multi_thread_Astar_getbestvalue(const environment &planning_environm
     */
     astar_planner planner;
     planner.plan_a_star(planning_environment);
+    // NOTE: this currently computes the non discounted value from a star
     best_value = planner.get_goal_cost() + TERMINAL_REWARD_g;
     return;
 }
@@ -1172,7 +1026,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         cout << "IN INITIAL BELIEF FOR SurgicalDespot" << endl;
 
         // TODO: CHANGE FROM HARD CODING FOR 3 OBSTACLES
-        if (NUM_OBSTACLES_g != 3 && NUM_OBSTACLES_g != 4) {
+        if (NUM_OBSTACLES_g != 1 && NUM_OBSTACLES_g != 3 && NUM_OBSTACLES_g != 4) {
             cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 or 4 OBSTACLES AT THE MOMENT" << endl;
             exit(1);
         }
@@ -1182,8 +1036,38 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         environment_start_state->get_obstacle_ks(start_state_obs_ks, NUM_OBSTACLES_g);
         double particle_weight;
 
+        if (NUM_OBSTACLES_g == 1) {
+            float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
+            for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
+                if (INITIAL_BELIEF_TYPE_g == "TRUE_CLASS") {
+                    // TRUE CLASS STRATEGY
+                    particle_weight = 1;
+                    // obstacle 1
+                    if (all_possible_obs_ks_g[obs1] == start_state_obs_ks[0]) {
+                        particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                    } else {
+                        particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                    }
+                } else if (INITIAL_BELIEF_TYPE_g == "CLASS_SET") {
+                    // CLASS SET STRATEGY
+                    particle_weight = class_set_init_belief_biased_distrib_g[obs1];
+                } else {
+                    // DEFAULT
+                    particle_weight = uniform_particle_weight;
+                }
+
+                // only add particle if it has a nonzero probability 
+                if (particle_weight > 0) {
+                    new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
+                    init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                    new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                    particles.push_back(new_particle_state);
+                }
+            }
+        }
+
         if (NUM_OBSTACLES_g == 3) {
-            float init_obstacle_ks[NUM_OBSTACLES_g];
+            float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
                     for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
@@ -1232,7 +1116,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                 }
             }
         } else if (NUM_OBSTACLES_g == 4) {
-            float init_obstacle_ks[NUM_OBSTACLES_g];
+            float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
                     for (int obs3 = 0; obs3 < NUM_OBS_K_CLASSES_g; obs3++) {
@@ -1359,6 +1243,7 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     */ 
     if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
         return new SurgicalDespotEuclideanUpperBound(this);
+        //return new SurgicalDespotAstarMultiThreadUpperBound(this);  
     } else if (name == "ASTAR") {
         return new SurgicalDespotAstarUpperBound(this);  
     } else {
@@ -1515,7 +1400,57 @@ void SurgicalDespot::PrintBelief(const Belief& belief, std::ostream& out) const 
     /*
     * Print what the belief is to the outstream. 
     */ 
-    // Dont implement as too much to print - just do nothing for this function
+    // Methodology: keep track of how many particles belong to each type of obstacle k configurations with a map and print that. 
+
+    const vector<State*>& particles = static_cast<const ParticleBelief&>(belief).particles();
+    std::map<OBS_TYPE, std::pair<int, double>> obstacle_k_particles_map;// map from obstacle ks to number of particles with that characteristic, and total weight
+    
+    float current_obstacle_ks[NUM_OBSTACLES_g];
+    for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+        const environment *environment_state = static_cast<const environment*>(particles[particle_num]);
+        environment_state->get_obstacle_ks(current_obstacle_ks, NUM_OBSTACLES_g);
+
+        double current_obsks_key = environment_state->class_observations_to_obstype(current_obstacle_ks, NUM_OBSTACLES_g);
+        if (obstacle_k_particles_map.find(current_obsks_key) == obstacle_k_particles_map.cend()) {
+            obstacle_k_particles_map[current_obsks_key].first = 1;
+            obstacle_k_particles_map[current_obsks_key].second = environment_state->weight;
+        } else {
+            obstacle_k_particles_map[current_obsks_key].first += 1;
+            obstacle_k_particles_map[current_obsks_key].second += environment_state->weight;
+        }
+    }
+
+    // print the results
+    int digit_multiplier;
+    if (NUM_OBS_K_CLASSES_g < 10) {
+        digit_multiplier = 10;
+    } else {
+        digit_multiplier = 100;
+    }
+    int current_obstacle_k_index;
+    
+    for (auto it = obstacle_k_particles_map.begin(); it != obstacle_k_particles_map.end(); it++) {
+        OBS_TYPE obs = it->first;
+        cout << "obstacle ks: {";
+        for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num++) {
+            // get the class observation from the OBS_TYPE number
+            int mod_num = pow(digit_multiplier, obs_num + 1);
+            current_obstacle_k_index = obs % mod_num;
+            int div_num = pow(digit_multiplier, obs_num);
+            current_obstacle_k_index = static_cast<int>(current_obstacle_k_index/div_num);
+            current_obstacle_k_index -= 1; // NOTE: remember the 1 shift to have 0 as the default
+
+            if (current_obstacle_k_index >= 0) {
+                cout << all_possible_obs_ks_g[current_obstacle_k_index] << ", ";
+            } else {
+                cout <<  DEFAULT_NOTOBSERVED_OBS_K_g << ", ";
+            }
+        }
+        cout << "}: " << it->second.first << " : " << it->second.second;
+        cout << "    ||    ";
+    }
+    cout << endl << endl << endl;
+
 }
 
 } // end namespace despot
