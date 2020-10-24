@@ -644,6 +644,7 @@ public:
         float x = 0;
         float y = 0;
         env_state_goal_coord = environment_state.get_goal_coord();
+
         for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
             x = static_cast<float>(env_state_robot_coords[arm_num].x);
             y = static_cast<float>(env_state_robot_coords[arm_num].y);
@@ -652,7 +653,7 @@ public:
                 - static_cast<double>(environment_state.get_goal_radius());
             arm_dist = std::min(std::max(arm_dist, static_cast<double>(0)), min_dist);
             if (arm_dist < min_dist) {
-                arm_dist = min_dist;
+                min_dist = arm_dist;
             }
         }
         return min_dist;
