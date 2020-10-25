@@ -595,6 +595,7 @@ public:
             }
             cout << action_weight_array[action] << ": " << (action_weight_array[action] > 0.00001) << ", ";
         }
+        cout << endl << "Global discount factor: " << Globals::Discount();
         cout << endl << endl;
         // TODO: REMOVE THIS END
 
@@ -667,8 +668,15 @@ public:
 
         double discountedValue;
         if (USE_CONSTANT_MOVEMENT_COST_g) {
-            discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
-                TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+
+            if (Globals::Discount() == 1) {
+                discountedValue = -(steps_to_goal * CONSTANT_MOVEMENT_COST_g) + TERMINAL_REWARD_g;
+            } else {
+                // discount factor 1 creates divide by 0 issue here. 
+                discountedValue = (-(1 - Globals::Discount(steps_to_goal)) / (1 - Globals::Discount()) * CONSTANT_MOVEMENT_COST_g ) + 
+                    TERMINAL_REWARD_g * Globals::Discount(steps_to_goal);
+            }
+
         } else {
             // if not using constant cost just return discounted terminal reward assuming no stage costs.  
             discountedValue = TERMINAL_REWARD_g * Globals::Discount(steps_to_goal - 1);
