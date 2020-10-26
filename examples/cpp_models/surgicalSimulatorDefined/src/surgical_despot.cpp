@@ -567,16 +567,25 @@ public:
             cout << action_weight_array[i] << ", ";
         }
         cout << endl;
+        std::vector<ValuedAction>nonweighted_action_value_vector;
         //TODO: END REMOVE
 
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
             const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
             for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
                 action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
+            
+                // TODO: REMOVE FOR DEBUGGING
+                nonweighted_action_value_vector.push_back(ValuedAction(action_num, AstarScenario_env_value_map_g[*environment_state][action_num]));
+                // TODO: END REMOVE FOR DEBUGGING
             }
         }
 
+
         // TODO: REMOVE THIS
+        cout << "THE SIZE OF THE NONWEIGHTED_ACTION_VALUE_VECTOR IS: " << nonweighted_action_value_vector.size() << endl;
+
+        const environment *environment_state = static_cast<const environment *>(particles[0]);
         cout << endl << endl;
         cout << "printing the weights"; 
         for (int action = 0; action < 6; action ++) {
@@ -593,16 +602,23 @@ public:
             } else if (action == 5) {
                 cout << "thetaDown: ";
             }
-            cout << action_weight_array[action] << ": " << (action_weight_array[action] > 0.00001) << ", ";
+            cout << action_weight_array[action] << ", ";
         }
         cout << endl << "Global discount factor: " << Globals::Discount();
-        cout << endl << endl;
+        cout << endl;
         // TODO: REMOVE THIS END
 
         ACT_TYPE best_action = std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions()));
         double best_discounted_value = action_weight_array[best_action];
 
         ValuedAction retValuedAction(best_action, best_discounted_value);
+
+        // TODO: REMOVE THIS 
+        // printing this since for some reason in the debugger the value does not seem correct. 
+        cout << "best action: " << best_action << ", best discounted value: " << best_discounted_value << endl;
+        cout << "ret valued action: " << retValuedAction.action << ", ret valued action value: " << retValuedAction.value << endl << endl;
+        // TODO: END REMOVE THIS
+
         return retValuedAction; 
     }
 
@@ -1035,7 +1051,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         cout << "IN INITIAL BELIEF FOR SurgicalDespot" << endl;
 
         // TODO: CHANGE FROM HARD CODING FOR 3 OBSTACLES
-        if (NUM_OBSTACLES_g != 1 && NUM_OBSTACLES_g != 3 && NUM_OBSTACLES_g != 4) {
+        if (NUM_OBSTACLES_g != 1 && NUM_OBSTACLES_g != 2 && NUM_OBSTACLES_g != 3 && NUM_OBSTACLES_g != 4) {
             cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 or 4 OBSTACLES AT THE MOMENT" << endl;
             exit(1);
         }
@@ -1044,7 +1060,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         float start_state_obs_ks[NUM_OBSTACLES_g];
         environment_start_state->get_obstacle_ks(start_state_obs_ks, NUM_OBSTACLES_g);
         double particle_weight;
-
+        // 1 obstacle case
         if (NUM_OBSTACLES_g == 1) {
             float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
@@ -1074,8 +1090,49 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                 }
             }
         }
+        // 2 obstacle case
+        else if (NUM_OBSTACLES_g == 2) {
+            float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
+            for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
+                for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
+                    
+                    if (INITIAL_BELIEF_TYPE_g == "TRUE_CLASS") {
+                        // TRUE CLASS STRATEGY
+                        particle_weight = 1;
+                        // obstacle 1
+                        if (all_possible_obs_ks_g[obs1] == start_state_obs_ks[0]) {
+                            particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                        } else {
+                            particle_weight = particle_weight * ((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                        }
+                        // obstacle 2
+                        if (all_possible_obs_ks_g[obs2] == start_state_obs_ks[1]) {
+                            particle_weight = particle_weight * TRUE_INITIAL_BIAS_PROBABILITY_g;
+                        } else {
+                            particle_weight = particle_weight *((1 - TRUE_INITIAL_BIAS_PROBABILITY_g)/(NUM_OBS_K_CLASSES_g - 1));
+                        }
 
-        if (NUM_OBSTACLES_g == 3) {
+                    } else if (INITIAL_BELIEF_TYPE_g == "CLASS_SET") {
+                        // CLASS SET STRATEGY
+                        particle_weight = class_set_init_belief_biased_distrib_g[obs1] * class_set_init_belief_biased_distrib_g[obs2];
+                    } else {
+                        // DEFAULT
+                        particle_weight = uniform_particle_weight;
+                    }
+
+                    // only add particle if it has a nonzero probability 
+                    if (particle_weight > 0) {
+                        new_particle_state = static_cast<environment *>(Allocate(-1, particle_weight));
+                        init_obstacle_ks[0] = all_possible_obs_ks_g[obs1];
+                        init_obstacle_ks[1] = all_possible_obs_ks_g[obs2];
+                        new_particle_state->set_obstacle_ks(init_obstacle_ks);
+                        particles.push_back(new_particle_state);
+                    }
+                }
+            }
+        }
+        // 3 obstacle case
+        else if (NUM_OBSTACLES_g == 3) {
             float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
@@ -1124,7 +1181,9 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
                     }
                 }
             }
-        } else if (NUM_OBSTACLES_g == 4) {
+        } 
+        // 4 obstacle case
+        else if (NUM_OBSTACLES_g == 4) {
             float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
             for (int obs1 = 0; obs1 < NUM_OBS_K_CLASSES_g; obs1++) {
                 for (int obs2 = 0; obs2 < NUM_OBS_K_CLASSES_g; obs2++) {
