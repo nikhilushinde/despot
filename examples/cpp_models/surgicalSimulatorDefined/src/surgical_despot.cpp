@@ -568,6 +568,7 @@ public:
         }
         cout << endl;
         std::vector<ValuedAction>nonweighted_action_value_vector;
+        std::map<double, int>numtimes_seen_astar_value;
         //TODO: END REMOVE
 
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
@@ -576,13 +577,40 @@ public:
                 action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
             
                 // TODO: REMOVE FOR DEBUGGING
-                nonweighted_action_value_vector.push_back(ValuedAction(action_num, AstarScenario_env_value_map_g[*environment_state][action_num]));
+                if (nonweighted_action_value_vector.size() < 13) {
+                    nonweighted_action_value_vector.push_back(ValuedAction(action_num, AstarScenario_env_value_map_g[*environment_state][action_num]));
+                }
+                double value_key = AstarScenario_env_value_map_g[*environment_state][action_num];
+                if (numtimes_seen_astar_value.find(value_key) == numtimes_seen_astar_value.cend()) {
+                    numtimes_seen_astar_value[value_key] = 0;
+                } else {
+                    numtimes_seen_astar_value[value_key] += 1;
+                }
                 // TODO: END REMOVE FOR DEBUGGING
             }
         }
 
 
         // TODO: REMOVE THIS
+        cout << "numtimes seen astar value: " ;
+        int numtimes_seen_astar_counter = 0;
+        int total_things = 0;
+        for (auto it = numtimes_seen_astar_value.cbegin(); it != numtimes_seen_astar_value.cend(); it++) {
+            cout << "(" << it->first << " : " << it->second << "), ";
+            numtimes_seen_astar_counter += 1;
+            total_things += it->second;
+        }
+        cout << endl << "The number of different kind of values are: " << numtimes_seen_astar_counter << endl;
+        cout << "Total things seen: " << total_things << endl;
+
+        cout << "nonweighted action value vector: ";
+        for (int i = 0; i < nonweighted_action_value_vector.size(); i++) {
+            cout << std::setprecision(17) << nonweighted_action_value_vector[i] << ", ";
+        }
+        cout << endl << endl;
+
+
+        cout << "The number of particles is: " << particles.size() << endl;
         cout << "THE SIZE OF THE NONWEIGHTED_ACTION_VALUE_VECTOR IS: " << nonweighted_action_value_vector.size() << endl;
 
         const environment *environment_state = static_cast<const environment *>(particles[0]);
@@ -602,7 +630,7 @@ public:
             } else if (action == 5) {
                 cout << "thetaDown: ";
             }
-            cout << action_weight_array[action] << ", ";
+            cout << std::setprecision(17) << action_weight_array[action] << ", ";
         }
         cout << endl << "Global discount factor: " << Globals::Discount();
         cout << endl;
@@ -621,9 +649,6 @@ public:
 
         return retValuedAction; 
     }
-
-
-    
 };
 
 
@@ -1055,11 +1080,35 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
             cerr << "INITIAL BELIEF ONLY HARD CODED FOR 3 or 4 OBSTACLES AT THE MOMENT" << endl;
             exit(1);
         }
-        
         const environment *environment_start_state = static_cast<const environment *>(start);
         float start_state_obs_ks[NUM_OBSTACLES_g];
         environment_start_state->get_obstacle_ks(start_state_obs_ks, NUM_OBSTACLES_g);
         double particle_weight;
+
+
+        // TODO: REMOVE THIS - FOR DEBUGGING
+        // custom initial belief prior for the 2 particle case JUST FOR DEBUGGING - REMOVE THIS PLEASE!!!!!!
+        if (NUM_OBSTACLES_g == 2) {
+            // have there just be 2 possible particles with 50 50 probability for testing. 
+            environment *new_particle_state_1 = static_cast<environment *>(Allocate(-1, 0.5));
+            float init_obstacle_ks_1[2] = {1e6, 1e6};
+            new_particle_state_1->set_obstacle_ks(init_obstacle_ks_1);
+            environment *new_particle_state_2 = static_cast<environment *>(Allocate(-1, 0.5));
+            float init_obstacle_ks_2[2] = {1e6, 1e-11}; // the true one
+            new_particle_state_2->set_obstacle_ks(init_obstacle_ks_2);
+
+            particles.push_back(new_particle_state_1);
+            particles.push_back(new_particle_state_2);
+            cout << "The number of particles created: " << particles.size() << endl;
+            return new ParticleBelief(particles, this, NULL, false);
+        } else {
+            // force error so you remember to REMOVE this
+            cerr << "in INITIAL BELIEF SURGICAL DESPOT - forgot to remove the testing code!!!!!!" << endl;
+            exit(1);
+        }
+        // TODO: END REMOVE THIS - FOR DEBUGGING
+
+
         // 1 obstacle case
         if (NUM_OBSTACLES_g == 1) {
             float init_obstacle_ks[NUM_OBSTACLES_g] = {0};
