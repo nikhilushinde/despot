@@ -264,6 +264,247 @@ public:
         return feasible_actions[ret_feasible_action_index];
     }   
 };
+
+/*
+* ***********************************************************************************
+* Default Policy class: to get a LOWER BOUND in  DESPOT - MULTI THREADED CLOSER HISTORY
+* ***********************************************************************************
+*/
+
+bool isFeasibleAction(int action_num, const environment& environment_state) {
+    /*
+    * Returns if the specified action number is feasible: in regards that it does not cause 
+    * the robot arms to go out of bounds. 
+    * 
+    * NOTE: Does not check for obstacle related collisions as those may be different in different particles
+    */ 
+    environment cpy_environment_state = environment_state;
+    robotArmActions action_array[NUM_ROBOT_ARMS_g];
+    // convert the integer to actions
+    int_to_action_array_g(action_num, action_array, NUM_ROBOT_ARMS_g);
+
+    bool error; 
+    float cost;
+    cpy_environment_state.robObj_m.step(action_array, XY_STEP_SIZE_g, THETA_DEG_STEP_SIZE_g, error, cost);
+    
+    // if error robot object auto rollbacks - else we roll it back ourself
+    if (error) {
+        return false;
+    } else {
+        cpy_environment_state.robObj_m.state_rollback();
+        return true;
+    }
+}
+
+bool isTowardsGoal(int action_num, const environment& environment_state) {
+    /*
+    * Returns true if the action brings the robot closer to the goal and false otherwise
+    */ 
+    robotArmActions action_array[NUM_ROBOT_ARMS_g];
+    int_to_action_array_g(action_num, action_array, NUM_ROBOT_ARMS_g);
+    robotArmCoords env_state_robot_coords[NUM_ROBOT_ARMS_g];
+    environment_state.get_all_robot_arm_coords(env_state_robot_coords, NUM_ROBOT_ARMS_g);
+    environmentCoords goal_coords;
+    goal_coords = environment_state.get_goal_coord();
+
+    bool goalToRight; // boolean indicator - true if goal to the right of arm 
+    bool goalToTop; // boolean indicator - true if goal above arm 
+    for (int arm_num = 0; arm_num < NUM_ROBOT_ARMS_g; arm_num++) {
+        if (action_array[arm_num] == stay) {
+            continue;
+        } else {
+            goalToRight = env_state_robot_coords[arm_num].x < goal_coords.x;
+            goalToTop = env_state_robot_coords[arm_num].y < goal_coords.y;
+
+            if (goalToRight && action_array[arm_num] == xRight) {
+                return true;
+            }  else if (!goalToRight && action_array[arm_num] == xLeft) {
+                return true;
+            }
+
+            if (goalToTop && action_array[arm_num] == yUp) {
+                return true;
+            } else if (!goalToTop && action_array[arm_num] == yDown) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void multi_thread_closerhistory_rolloutpolicy(const environment &planning_environment, int particle_number,  int total_num_actions, RandomStreams& streams, History& history, double &state_value, ACT_TYPE &first_action) {
+    /*
+    * This carries out a rollout policy for the specified environment in a seperate thread. 
+    * This function uses the specified random streams until they end to complete the rollout. 
+    * The probability of the random action is exponentially annealed with the base of 0.95 - from every step. 
+    * args: 
+    *   - planning_environment
+    *   - particle_number: the particle that this environment belongs to 
+    *   - streams: the random streams to use
+    *   - history: history of actions and observations
+    * returns:  
+    *   - state_value: by pass by reference - the value of the state as found by doing the rollout
+    *   - first_action: by pass by reference - the first action taken during the rollout
+    */ 
+    int starting_stream_position = streams.position();
+    int max_actions = 1e4;
+    int action_counter = 0; 
+    environment tempEnvironment = planning_environment; 
+
+    ACT_TYPE last_action = thetaDown;
+    if (history.Size() > 0) {
+        last_action = history.LastAction();
+    } 
+    double exp_base = 0.95; // for the random probability
+
+    // continue until the state terminates or you hit some max number of actions
+    double total_cost = 0;
+    while (!tempEnvironment.at_goal() && action_counter < max_actions) {
+        double random_action_prob = pow(exp_base, action_counter);
+        int stream_position = starting_stream_position + action_counter; 
+
+        double random_number = 0;
+        if (streams.Length() - 1 < stream_position) {
+            // at the end of stream select action randomly
+            random_number = streams.Entry(particle_number, stream_position);
+        } else {
+            // use the stream
+            random_number = Random::RANDOM.NextDouble(0, 1);
+        }
+
+        // decide whether to do a random action 
+        bool take_completely_random_action = false;
+        if (random_number < random_action_prob) {
+            take_completely_random_action = true;
+        } else {
+            take_completely_random_action = false;
+        }
+
+        // get the list of all the actions to choose from 
+        std::vector<ACT_TYPE> feasible_actions; 
+        std::vector<ACT_TYPE> towards_goal_feasible_actions;
+        for (int action_num = 0; action_num < total_num_actions; action_num++) {
+            if (isFeasibleAction(action_num, tempEnvironment) && !isReverseAction_g(action_num, last_action)) {
+                feasible_actions.push_back(action_num);
+                if (isTowardsGoal(action_num, tempEnvironment)) {
+                    towards_goal_feasible_actions.push_back(action_num);
+                }
+            }
+        }
+
+        // choose the action
+        ACT_TYPE chosen_action;
+        if (!take_completely_random_action && towards_goal_feasible_actions.size() > 0) {
+            chosen_action = towards_goal_feasible_actions[Random::RANDOM.NextInt(towards_goal_feasible_actions.size())];
+        } else {
+            chosen_action = feasible_actions[Random::RANDOM.NextInt(feasible_actions.size())];
+        }
+
+        if (action_counter == 0) {
+            // set the first action taken 
+            first_action = chosen_action;
+        }
+        
+        // step the environment with the chosen action and move state variables forward
+        robotArmActions action_array[NUM_ROBOT_ARMS_g];
+        int_to_action_array_g(chosen_action, action_array, NUM_ROBOT_ARMS_g);
+        bool error;
+        float step_cost; 
+        tempEnvironment.step(action_array, error, step_cost);
+
+        total_cost += Globals::Discount(action_counter)*step_cost;
+        action_counter ++;
+        last_action = chosen_action;
+    } 
+
+    // add the terminal reward to te accumulated goal state 
+    if (tempEnvironment.at_goal()) {
+        state_value = -total_cost + Globals::Discount(action_counter)*TERMINAL_REWARD_g;
+    } else {
+        state_value = -total_cost;
+    }
+    return;
+}
+
+class SurgicalDespotCloserHistoryPolicy_multiThread: public ScenarioLowerBound {
+/*
+* This calculates the value of the state using a history based rollout policy
+* Policy methodology: 
+*   - If there is no history take a random action that does not run into walls. If there is a history
+*   take actions that do not double back on the last action. 
+*   - When selecting the random action: select actions that lead you closer to the  goal coordinate
+*   in the environment with some probability and select actions completely at random with some other probability
+*
+* Note: rather than just being a default policy this uses a multi threaded approach to do each of the rollouts
+* and compute the value in individual threads to allow efficient compute
+*/
+
+private:
+    const SurgicalDespot *surgicalDespot_m;
+public: 
+    SurgicalDespotCloserHistoryPolicy_multiThread(const DSPOMDP* model): ScenarioLowerBound(model) {
+        /*
+        * Default constructor for the Astar based scenario lower bound
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+    }
+
+    ValuedAction Value(const vector<State*>& particles, RandomStreams& streams, History& history) const {
+        /*
+        * Find the value of the belief using a multithreading approach for each particle. 
+        */
+        std::vector<std::thread> all_particle_threads;
+        double default_init_value; 
+
+        double all_particle_values[particles.size()] = {0}; // store all the values that will be returned by the multithreaded functions
+        ACT_TYPE all_particle_first_actions[particles.size()] = {0}; // stores all the first actions that will be returned by the multithreaded functions
+        // loop to spawn all the threads
+        int total_num_actions = surgicalDespot_m->NumActions();
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            all_particle_threads.push_back(std::thread(multi_thread_closerhistory_rolloutpolicy, std::ref(*environment_state), particle_num, 
+                total_num_actions, std::ref(streams), std::ref(history), std::ref(all_particle_values[particle_num]), 
+                std::ref(all_particle_first_actions[particle_num])));
+
+            //const environment &planning_environment, int particle_number,  int total_num_actions, RandomStreams& streams, History& history, double &state_value, ACT_TYPE &first_action
+        }
+
+        // wait for all the threads
+        int total_threads = all_particle_threads.size();
+        for (int thread_num = 0; thread_num < total_threads; thread_num++) {
+            all_particle_threads[thread_num].join();
+        }
+
+        // come up with the total value and action to return
+        double action_weight_array[surgicalDespot_m->NumActions()] = {0};
+        for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
+            const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
+            
+            ACT_TYPE particle_action = all_particle_first_actions[particle_num]; 
+            double particle_value = all_particle_values[particle_num];
+
+            action_weight_array[particle_action] += (environment_state->weight*particle_value);
+        }
+
+        ACT_TYPE best_action = static_cast<ACT_TYPE>(std::distance(action_weight_array, std::max_element(action_weight_array, action_weight_array + surgicalDespot_m->NumActions())));
+        double best_value = action_weight_array[best_action];
+
+        // TODO: REMOVE THIS
+        cout << "Action weight array: ";
+        for (int i = 0; i < surgicalDespot_m->NumActions(); i++) {
+            cout << action_weight_array[i] << ", "; 
+        }
+        cout << endl << endl;
+
+        // TODO: END REMOVE THIS
+
+        ValuedAction retValuedAction = ValuedAction(best_action, best_value);
+        return retValuedAction;
+    }
+};
+
+
 /*
 * ***********************************************************************************
 * A star based Default Policy class: to get a LOWER BOUND in  DESPOT. 
@@ -337,6 +578,7 @@ public:
 
     }
 };
+
 
 /*
 * ***********************************************************************************
@@ -1394,8 +1636,11 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         //cout << "TODO: CHANGE THIS BACK TO A STAR AFTER TESTING SCHR" << endl;
         //return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
         
-        cout << "CREATED A STAR LOWER BOUND " << endl << endl;
-        return new SurgicalDespotAstarScenarioLowerBound(model);
+        //cout << "CREATED A STAR LOWER BOUND " << endl << endl;
+        //return new SurgicalDespotAstarScenarioLowerBound(model);
+
+        cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
+        return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
 
         //cout << "create Astar multi threaded based lower bound" << endl;
         //return new SurgicalDespotAstarMultiThreadPolicy(model, CreateParticleLowerBound(particle_bound_name));
