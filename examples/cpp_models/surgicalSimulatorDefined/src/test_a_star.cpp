@@ -56,15 +56,15 @@ int main() {
 		} else if (current_action == 5) {
 			cout << "thetaDown: ";
 		}
-        cout << all_values_along_path[i] << ", ";
+        cout << std::setprecision(17) << all_values_along_path[i] << ", ";
     }   
     cout << endl << endl;
 
-    cout << "get NON discounted goal cost: " << planner.get_goal_cost() << endl;
-    cout << "get discounted value: " << planner.get_discounted_goal_value(actions_to_goal) << endl;
-    cout << "the terminal reward alone is: " << TERMINAL_REWARD_g << endl;
-    cout << "the discount factor is: " << Globals::Discount(1) << endl;
-    cout << "environment is at goal: " << planner.is_goal(test_environment) << endl;
+    cout << "get NON discounted goal cost: " << std::setprecision(17) << planner.get_goal_cost() << endl;
+    cout << "get discounted value: " << std::setprecision(17) << planner.get_discounted_goal_value(actions_to_goal) << endl;
+    cout << "the terminal reward alone is: " << std::setprecision(17) << TERMINAL_REWARD_g << endl;
+    cout << "the discount factor is: " << std::setprecision(17) << Globals::Discount() << endl;
+    cout << "environment is at goal: " << std::setprecision(17) << planner.is_goal(test_environment) << endl;
     cout << endl << endl << endl;
 
     environment env;
@@ -99,9 +99,10 @@ int main() {
         actions_to_goal.clear();
         childplanner.get_path(actions_to_goal);
 
-        cout << "cost to step to child: " << cost << endl;
-        cout << "get NON discounted goal cost: " << childplanner.get_goal_cost() << endl;
-        cout << "get discounted value: " << childplanner.get_discounted_goal_value(actions_to_goal) << endl;
+        cout << "cost to step to child: " << std::setprecision(17) << cost << endl;
+        cout << "get NON discounted goal cost after the first step: " << std::setprecision(17) << childplanner.get_goal_cost() << endl;
+        cout << "NON discounted goal cost including the first step cost: " << std::setprecision(17) << cost + childplanner.get_goal_cost() << endl;
+        cout << "get discounted value: " << std::setprecision(17) << childplanner.get_discounted_goal_value(actions_to_goal) << endl;
         cout << "the terminal reward alone is: " << TERMINAL_REWARD_g << endl;
 
         cout << endl << endl << endl;
