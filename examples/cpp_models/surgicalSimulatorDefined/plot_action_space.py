@@ -15,9 +15,32 @@ total_num_actions = 6
 # colors corresponding to actions - x:red, y:blue, theta:green
 images = np.ones((num_images, img_height, img_width, 3))*255 # array of 5: 200 by 200 images
 
-# index maps to action
-colors = [(255, 0, 0), (255, 255, 0), (0, 255, 0), (0, 255, 255), (150, 150, 255), (255, 0, 255)]
 
+def action_num_to_arrow(action_num):
+	if (action_num == 0):
+		# right arrow 
+		return ">"
+	elif (action_num == 1):
+		# left arrow 
+		return "<"
+	elif  (action_num == 2):
+		# up arrow
+		return "^"
+	elif (action_num == 3):
+		# down arrow 
+		return "V"
+	elif (action_num == 4):
+		# theta up 
+		return "T"
+	elif (action_num == 5):
+		# theta down 
+		return "t"
+	else:
+		print("THERE WAS AN ERROR")
+
+# index maps to action
+colors = [(255, 0, 0), (255, 255, 0), (0, 255, 0), (0, 255, 255), (200, 200, 255), (255, 0, 255)]
+use_arrows = True
 
 for img_num in range(num_images):
 	for idx in range(points_per_img):
@@ -49,8 +72,12 @@ for img_num in range(num_images):
 		coords = (astar_actions[list_idx][0][0], astar_actions[list_idx][0][1])
 		fontCoords = (coords[0] - 4, img_height - coords[1] + 4)
 		# Using cv2.putText() method 
-		cv2.putText(images[img_num], str(astar_actions[list_idx][1]) , fontCoords, font,  
+		if not use_arrows: 
+			cv2.putText(images[img_num], str(astar_actions[list_idx][1]) , fontCoords, font,  
 		                   fontScale, fontcolor, fontThickness, cv2.LINE_AA) 
+		else: 
+			arrow = action_num_to_arrow(astar_actions[list_idx][1])
+			cv2.putText(images[img_num], arrow, fontCoords, font, fontScale, fontcolor, fontThickness, cv2.	LINE_AA)
 
 
 label_img = np.ones((200, 200, 3))*255
@@ -68,9 +95,12 @@ for i in range(len(colors)):
 	fontThickness = 1
 	fontCoords = (coords[0] - 4, coords[1] + 4)
 	# Using cv2.putText() method 
-	cv2.putText(label_img, str(i) , fontCoords, font,  
+	if not use_arrows: 
+		cv2.putText(label_img, str(i) , fontCoords, font,  
 				fontScale, fontcolor, fontThickness, cv2.LINE_AA) 
-	
+	else: 
+		arrow = action_num_to_arrow(i)
+		cv2.putText(label_img, arrow, fontCoords, font, fontScale, fontcolor, fontThickness, cv2.LINE_AA)
 """
 # flip the label image
 label_img = label_img[::-1, ::, ::]
