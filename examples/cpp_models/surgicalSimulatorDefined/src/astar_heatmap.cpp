@@ -57,18 +57,18 @@ int main() {
     environment high_environment;
     environment both_environment;
 
-    float high_obs_ks[NUM_OBSTACLES_g] = {1e6, 1e6};
+    float high_obs_ks[NUM_OBSTACLES_g] = {1e-11, 1e6};//{1e6, 1e6};
     float both_obs_ks[NUM_OBSTACLES_g] = {1e6, 1e-11};
     high_environment.set_obstacle_ks(high_obs_ks);
     both_environment.set_obstacle_ks(both_obs_ks);
 
     // define the range and number of steps you want in your heatmap of the values
-    int start_x = 30;
-    int start_y = 100; 
+    int start_x = 0;
+    int start_y = 10; 
     int start_theta = -10; 
 
-    int num_x_steps = 5;
-    int num_y_steps = 5; 
+    int num_x_steps = 13;
+    int num_y_steps = 12; 
     int num_theta_steps = 5; 
 
     ACT_TYPE astar_actions[num_x_steps*num_y_steps*num_theta_steps];
@@ -88,11 +88,16 @@ int main() {
                 current_coords[0].y = current_y;
                 current_coords[0].theta_degrees = current_theta;
                 
-                high_environment.set_robot_arms_autoset_obstacles(current_coords, deflection_directions);
-                both_environment.set_robot_arms_autoset_obstacles(current_coords, deflection_directions);
+                bool high_error = high_environment.set_robot_arms_autoset_obstacles(current_coords, deflection_directions);
+                bool both_error = both_environment.set_robot_arms_autoset_obstacles(current_coords, deflection_directions);
 
-                all_particle_threads.push_back(std::thread(multi_thread_Astar_getbestaction, 
-                    high_environment, both_environment, std::ref(astar_actions[counter])));
+                // if the coordinate state is invalid just put a -1 for the action as a placeholder and continue
+                if (high_error || both_error) {
+                    astar_actions[counter] = -1;
+                } else {
+                    all_particle_threads.push_back(std::thread(multi_thread_Astar_getbestaction, 
+                        high_environment, both_environment, std::ref(astar_actions[counter])));
+                }
                 counter ++;
             }
         }
