@@ -813,11 +813,20 @@ public:
         std::map<double, int>numtimes_seen_astar_value;
         //TODO: END REMOVE
 
+        double double_back_penalty = DOUBLE_BACK_PENALTY_g;//0;//-1e4;
+
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
             const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
             for (ACT_TYPE action_num = 0; action_num < surgicalDespot_m->NumActions(); action_num++) {
-                action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
-            
+
+                if (history.Size() > 0 && isReverseAction_g(action_num, history.LastAction())) {
+                    // penalize for double backing
+                    action_weight_array[action_num] += environment_state->weight*(AstarScenario_env_value_map_g[*environment_state][action_num] + double_back_penalty);
+                } else {
+                    action_weight_array[action_num] += environment_state->weight*AstarScenario_env_value_map_g[*environment_state][action_num];
+                }
+                
+
                 // TODO: REMOVE FOR DEBUGGING
                 if (nonweighted_action_value_vector.size() < 13) {
                     nonweighted_action_value_vector.push_back(ValuedAction(action_num, AstarScenario_env_value_map_g[*environment_state][action_num]));
@@ -1328,7 +1337,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         double particle_weight;
 
 
-        // TODO: REMOVE THIS - FOR DEBUGGING
+        // TODO: REMOVE THIS - FOR DEBUGGING - CUSTOM INITIAL BELIEF
         // custom initial belief prior for the 2 particle case JUST FOR DEBUGGING - REMOVE THIS PLEASE!!!!!!
         if (NUM_OBSTACLES_g == 2) {
             // have there just be 2 possible particles with 50 50 probability for testing. 
@@ -1348,7 +1357,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
             cerr << "in INITIAL BELIEF SURGICAL DESPOT - forgot to remove the testing code!!!!!!" << endl;
             exit(1);
         }
-        // TODO: END REMOVE THIS - FOR DEBUGGING
+        // TODO: END REMOVE THIS - FOR DEBUGGING - CUSTOM INITIAL BELIEF
 
 
         // 1 obstacle case
@@ -1602,6 +1611,7 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     */ 
     if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
         return new SurgicalDespotEuclideanUpperBound(this);
+        //cout << "CREATE A STAR UPPER BOUND" << endl << endl;
         //return new SurgicalDespotAstarMultiThreadUpperBound(this);  
     } else if (name == "ASTAR") {
         return new SurgicalDespotAstarUpperBound(this);  
@@ -1636,11 +1646,11 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         //cout << "TODO: CHANGE THIS BACK TO A STAR AFTER TESTING SCHR" << endl;
         //return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
         
-        //cout << "CREATED A STAR LOWER BOUND " << endl << endl;
-        //return new SurgicalDespotAstarScenarioLowerBound(model);
+        cout << "CREATED A STAR LOWER BOUND " << endl << endl;
+        return new SurgicalDespotAstarScenarioLowerBound(model);
 
-        cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
-        return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
+        //cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
+        //return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
 
         //cout << "create Astar multi threaded based lower bound" << endl;
         //return new SurgicalDespotAstarMultiThreadPolicy(model, CreateParticleLowerBound(particle_bound_name));
