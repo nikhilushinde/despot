@@ -1091,12 +1091,13 @@ static void multi_thread_Astar_getbestvalue(const environment &planning_environm
     astar_planner planner;
     planner.plan_a_star(planning_environment);
     // NOTE: this currently computes the non discounted value from a star
-    best_value = planner.get_goal_cost() + TERMINAL_REWARD_g;
+    best_value = -(planner.get_goal_cost()) + TERMINAL_REWARD_g;
     return;
 }
+// map to store A star calculations for upper bounds
+static std::map<environment, double>AstarUpperBound_env_value_map_g; 
 
-
-class SurgicalDespotAstarMultiThreadUpperBound: public ParticleUpperBound, public BeliefUpperBound {
+class SurgicalDespotAstarMultiThreadUpperBound: public ScenarioUpperBound{ 
 /*
 * This class creates an upper bound on the reward for the environment using the metric of
 * the nondiscounted Astar value that is computed from running the algorithm. 
@@ -1111,28 +1112,15 @@ public:
         cout << "Creating the A star based upper bound" << endl;
     }
 
-    using ParticleUpperBound::Value;
-    double Value(const State &s) const {
-        // Required function
-        astar_planner planner;
-        const environment* environment_state = static_cast<const environment*>(&s);
-        planner.plan_a_star(*environment_state);
-        double nonDiscountedUpperBoundValue = planner.get_goal_cost();
-        return nonDiscountedUpperBoundValue;
-    }
-
-    
-
-    using BeliefUpperBound::Value;
-    double Value(const Belief* belief) const {
+    //using BeliefUpperBound::Value;
+    double Value(const std::vector<State*>& particles,
+		RandomStreams& streams, History& history) const {
         /*
         * Compute the nondiscounted value of each particle using A star and average them 
         * to compute the belief upper bound value. 
         */ 
         astar_planner planner;
 
-        std::map<environment, double> astar_best_value_map;
-        const vector<State *>&particles = static_cast<const ParticleBelief*>(belief)->particles();
         double totalValue = 0;
 
         const environment *environment_state;
@@ -1145,12 +1133,13 @@ public:
         // spawn threads to calculate upper bound values with A star
         for (int particle_num = 0; particle_num < particles.size(); particle_num++) {
             const environment *environment_state = static_cast<const environment *>(particles[particle_num]);
-            std::map<environment, double>::iterator it = astar_best_value_map.find(*environment_state);
+            //std::map<environment, double>::iterator it = astar_best_value_map.find(*environment_state);
+            auto it = AstarUpperBound_env_value_map_g.find(*environment_state);
 
-            if (it == astar_best_value_map.cend()) {
+            if (it == AstarUpperBound_env_value_map_g.cend()) {
                 // spawn a thread to run a star 
-                astar_best_value_map[*environment_state] = default_init_value; 
-                all_particle_threads[num_created_threads] = std::thread(multi_thread_Astar_getbestvalue, std::ref(*environment_state), std::ref(astar_best_value_map[*environment_state]));
+                AstarUpperBound_env_value_map_g[*environment_state] = default_init_value; 
+                all_particle_threads[num_created_threads] = std::thread(multi_thread_Astar_getbestvalue, std::ref(*environment_state), std::ref(AstarUpperBound_env_value_map_g[*environment_state]));
                 num_created_threads ++;
             } else { 
                 // have already spawned a thread for this environment
@@ -1166,7 +1155,7 @@ public:
         // compute the total weighted value
         for (int i = 0; i < particles.size(); i++) {
             const environment * environment_state = static_cast<const environment *>(particles[i]);
-            totalValue += (astar_best_value_map[*environment_state]*environment_state->weight);
+            totalValue += (AstarUpperBound_env_value_map_g[*environment_state]*environment_state->weight);
         }
 
         return totalValue;
@@ -1621,6 +1610,7 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     }
 }
 
+
 ValuedAction SurgicalDespot::GetBestAction() const {
     /*
     * This function returns the best action to be taken given nothing. This action is used to calculate the 
@@ -1646,11 +1636,11 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         //cout << "TODO: CHANGE THIS BACK TO A STAR AFTER TESTING SCHR" << endl;
         //return new SurgicalDespotCloserHistoryPolicy(model, CreateParticleLowerBound(particle_bound_name));
         
-        cout << "CREATED A STAR LOWER BOUND " << endl << endl;
-        return new SurgicalDespotAstarScenarioLowerBound(model);
+        //cout << "CREATED A STAR LOWER BOUND " << endl << endl;
+        //return new SurgicalDespotAstarScenarioLowerBound(model);
 
-        //cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
-        //return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
+        cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
+        return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
 
         //cout << "create Astar multi threaded based lower bound" << endl;
         //return new SurgicalDespotAstarMultiThreadPolicy(model, CreateParticleLowerBound(particle_bound_name));
