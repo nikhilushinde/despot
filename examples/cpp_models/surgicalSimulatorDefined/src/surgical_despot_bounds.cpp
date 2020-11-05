@@ -901,6 +901,66 @@ public:
 
 /*
 * ***********************************************************************************
+* Single Astar average parameter based SCENARIO LOWER BOUND
+* ***********************************************************************************
+*/
+class SurgicalDespotAstar_ParamAvgClass_LowerBound: public ScenarioLowerBound{
+/*
+* This class uses the belief to generate one deterministic environment by averaging the class parameters.
+* Then it does Astar on that environment
+* and using that A star determines the best action to take. 
+*/
+private:
+    const SurgicalDespot *surgicalDespot_m;
+public: 
+    SurgicalDespotAstar_ParamAvgClass_LowerBound(const DSPOMDP* model): ScenarioLowerBound(model) {
+        /*
+        * Default constructor for the Astar based scenario lower bound
+        */ 
+        surgicalDespot_m = static_cast<const SurgicalDespot *>(model);
+    }
+
+    ValuedAction Value(const vector<State*>& particles, RandomStreams& streams, History& history) const {
+        /*
+        * Calculate the value of the scenario from the belief
+        */ 
+        float average_obstacle_ks[NUM_OBSTACLES_g] = {0};
+        
+        for (int particle_num = 0; particle_num < particles.size(); particle_num ++) {
+            const environment* environment_state = static_cast<const environment*>(particles[particle_num]);
+            float current_environment_obsks[NUM_OBSTACLES_g] = {0};
+            environment_state->get_obstacle_ks(current_environment_obsks, NUM_OBSTACLES_g);
+
+            for (int obstacle_num = 0; obstacle_num < NUM_OBSTACLES_g; obstacle_num ++) {
+                average_obstacle_ks[obstacle_num] = current_environment_obsks[obstacle_num] / particles.size();
+            }
+        }
+        
+        // initialize deterministic environment with the average of the parameters. 
+        environment average_environment;
+        average_environment.set_obstacle_ks(average_obstacle_ks);        
+        
+        // now compute the optimal action value pair. 
+        astar_planner planner; 
+        vector<ACT_TYPE> all_path_actions;
+
+        planner.plan_a_star(average_environment);
+        float best_value = -(planner.get_goal_cost()) + TERMINAL_REWARD_g; 
+        planner.get_path(all_path_actions);
+        ACT_TYPE best_action = all_path_actions[0];
+
+        // get the valued action to return 
+        ValuedAction retValuedAction; 
+        retValuedAction.action = best_action; 
+        retValuedAction.value = best_value;
+        return retValuedAction; 
+    }
+
+};
+
+
+/*
+* ***********************************************************************************
 * Euclidean distance based UPPER bound class
 * ***********************************************************************************
 */
