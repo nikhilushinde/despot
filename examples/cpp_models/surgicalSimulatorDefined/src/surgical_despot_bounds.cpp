@@ -932,7 +932,7 @@ public:
             environment_state->get_obstacle_ks(current_environment_obsks, NUM_OBSTACLES_g);
 
             for (int obstacle_num = 0; obstacle_num < NUM_OBSTACLES_g; obstacle_num ++) {
-                average_obstacle_ks[obstacle_num] = current_environment_obsks[obstacle_num] / particles.size();
+                average_obstacle_ks[obstacle_num] += current_environment_obsks[obstacle_num] / particles.size();
             }
         }
         
