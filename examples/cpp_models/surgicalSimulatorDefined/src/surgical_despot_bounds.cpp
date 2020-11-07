@@ -937,7 +937,8 @@ public:
         }
         
         // initialize deterministic environment with the average of the parameters. 
-        environment average_environment;
+        // since the obstacle k values are the only probabilistic thing you can copy a particle environment and then set the obstacle values
+        environment average_environment = environment(*static_cast<const environment*>(particles[0]));
         average_environment.set_obstacle_ks(average_obstacle_ks);        
         
         // now compute the optimal action value pair. 

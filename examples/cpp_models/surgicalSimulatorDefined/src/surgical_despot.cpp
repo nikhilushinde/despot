@@ -458,9 +458,9 @@ ScenarioUpperBound* SurgicalDespot::CreateScenarioUpperBound(std::string name, s
     * Create the Upper Bound for the TagNikhil class. 
     */ 
     if (name == "DEFAULT" || name == "TRIVIAL" || name == "EUCLIDEAN") {
-        //return new SurgicalDespotEuclideanUpperBound(this);
-        cout << "CREATE A STAR UPPER BOUND" << endl << endl;
-        return new SurgicalDespotAstarMultiThreadUpperBound(this);  
+        return new SurgicalDespotEuclideanUpperBound(this);
+        //cout << "CREATE A STAR UPPER BOUND" << endl << endl;
+        //return new SurgicalDespotAstarMultiThreadUpperBound(this);  
     } else if (name == "ASTAR") {
         return new SurgicalDespotAstarUpperBound(this);  
     } else {
@@ -498,12 +498,16 @@ ScenarioLowerBound* SurgicalDespot::CreateScenarioLowerBound(string name, string
         //cout << "CREATED A STAR LOWER BOUND " << endl << endl;
         //return new SurgicalDespotAstarScenarioLowerBound(model);
 
-        cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
-        return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
+        //cout << "CREATED MULTI THREADED closer history lower bound " << endl << endl;
+        //return new SurgicalDespotCloserHistoryPolicy_multiThread(model);
 
         //cout << "create Astar multi threaded based lower bound" << endl;
         //return new SurgicalDespotAstarMultiThreadPolicy(model, CreateParticleLowerBound(particle_bound_name));
         //return new SurgicalDespotAstarPolicy(model, CreateParticleLowerBound(particle_bound_name));
+
+        cout << "create Astar based parameter averaging policy" << endl;
+        return new SurgicalDespotAstar_ParamAvgClass_LowerBound(model);
+    
     } else if (name == "ASTAR") {
         cout << "CREATED A STAR LOWER BOUND " << endl << endl;
         return new SurgicalDespotAstarScenarioLowerBound(model);
