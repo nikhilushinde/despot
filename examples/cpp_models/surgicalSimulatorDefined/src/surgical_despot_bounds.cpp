@@ -925,6 +925,7 @@ public:
         * Calculate the value of the scenario from the belief
         */ 
         float average_obstacle_ks[NUM_OBSTACLES_g] = {0};
+        double total_particle_weight = 0;
         
         for (int particle_num = 0; particle_num < particles.size(); particle_num ++) {
             const environment* environment_state = static_cast<const environment*>(particles[particle_num]);
@@ -934,6 +935,7 @@ public:
             for (int obstacle_num = 0; obstacle_num < NUM_OBSTACLES_g; obstacle_num ++) {
                 average_obstacle_ks[obstacle_num] += current_environment_obsks[obstacle_num] / particles.size();
             }
+            total_particle_weight += particles[particle_num]->weight;
         }
         
         // initialize deterministic environment with the average of the parameters. 
@@ -953,7 +955,13 @@ public:
         // get the valued action to return 
         ValuedAction retValuedAction; 
         retValuedAction.action = best_action; 
-        retValuedAction.value = best_value;
+        // NOTE: must weight by the total weight of the particles to allow lower bound to be well defined otherwise lower bound may exceed terminal reward
+        retValuedAction.value = best_value * total_particle_weight;
+
+        if (best_value > TERMINAL_REWARD_g) {
+            cout << "There was an ERROR: value cannot be greater than the terminal reward!" << endl;
+        }
+
         return retValuedAction; 
     }
 
