@@ -115,7 +115,8 @@ void astar_planner::get_path(vector<ACT_TYPE>& ret_all_path_actions){
         cerr << "ERROR: In plan a star get path: get_path called without first planning" << endl;
         exit(1);
     }
-
+    // clear the path vector before starting
+    ret_all_path_actions.clear();
     environment current_state_ptr;
     current_state_ptr = goal_state_m;
 
