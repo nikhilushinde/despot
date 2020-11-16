@@ -184,16 +184,16 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
         environment_start_state->get_obstacle_ks(start_state_obs_ks, NUM_OBSTACLES_g);
         double particle_weight;
 
-
+        
         // TODO: REMOVE THIS - FOR DEBUGGING - CUSTOM INITIAL BELIEF
         // custom initial belief prior for the 2 particle case JUST FOR DEBUGGING - REMOVE THIS PLEASE!!!!!!
         if (NUM_OBSTACLES_g == 2) {
             // have there just be 2 possible particles with 50 50 probability for testing. 
             environment *new_particle_state_1 = static_cast<environment *>(Allocate(-1, 0.5));
-            float init_obstacle_ks_1[2] = {1e6, 1e6};
+            float init_obstacle_ks_1[2] = {1e6, 1e-11};
             new_particle_state_1->set_obstacle_ks(init_obstacle_ks_1);
             environment *new_particle_state_2 = static_cast<environment *>(Allocate(-1, 0.5));
-            float init_obstacle_ks_2[2] = {1e6, 1e-11}; // the true one
+            float init_obstacle_ks_2[2] = {1e-11, 1e6}; // the true one
             new_particle_state_2->set_obstacle_ks(init_obstacle_ks_2);
 
             particles.push_back(new_particle_state_1);
@@ -206,7 +206,7 @@ Belief* SurgicalDespot::InitialBelief(const State* start, std::string type) cons
             exit(1);
         }
         // TODO: END REMOVE THIS - FOR DEBUGGING - CUSTOM INITIAL BELIEF
-
+        
 
         // 1 obstacle case
         if (NUM_OBSTACLES_g == 1) {

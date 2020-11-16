@@ -904,6 +904,10 @@ public:
 * Single Astar average parameter based SCENARIO LOWER BOUND
 * ***********************************************************************************
 */
+// create a global map to to be used for the  SurgicalDespotAstar_ParamAvgClass_LowerBound, stores the non weighted best action and value 
+// make sure to weight it by the total particle weight when returning from the bounding function
+static std::map<environment, ValuedAction>AstarScenario_avgenv_value_map_g; 
+
 class SurgicalDespotAstar_ParamAvgClass_LowerBound: public ScenarioLowerBound{
 /*
 * This class uses the belief to generate one deterministic environment by averaging the class parameters.
@@ -942,23 +946,32 @@ public:
         // since the obstacle k values are the only probabilistic thing you can copy a particle environment and then set the obstacle values
         environment average_environment = environment(*static_cast<const environment*>(particles[0]));
         average_environment.set_obstacle_ks(average_obstacle_ks);        
-        
-        // now compute the optimal action value pair. 
-        astar_planner planner; 
-        vector<ACT_TYPE> all_path_actions;
 
-        planner.plan_a_star(average_environment);
-        float best_value = -(planner.get_goal_cost()) + TERMINAL_REWARD_g; 
-        planner.get_path(all_path_actions);
-        ACT_TYPE best_action = all_path_actions[0];
+        if (AstarScenario_avgenv_value_map_g.find(average_environment) == AstarScenario_avgenv_value_map_g.cend()) {
+            // Only compute the Astar if you have not previously precomputed this. 
+            // now compute the optimal action value pair. 
+            astar_planner planner; 
+            vector<ACT_TYPE> all_path_actions;
+            
+            // the environment was not in the map
+            planner.plan_a_star(average_environment);
+            float best_value = -(planner.get_goal_cost()) + TERMINAL_REWARD_g; 
+            planner.get_path(all_path_actions);
+            ACT_TYPE best_action = all_path_actions[0];
+
+            ValuedAction stored_valuedAction; 
+            stored_valuedAction.action = best_action; 
+            stored_valuedAction.value = best_value; 
+            AstarScenario_avgenv_value_map_g[average_environment] = stored_valuedAction;
+        } 
 
         // get the valued action to return 
         ValuedAction retValuedAction; 
-        retValuedAction.action = best_action; 
+        retValuedAction.action = AstarScenario_avgenv_value_map_g[average_environment].action; 
         // NOTE: must weight by the total weight of the particles to allow lower bound to be well defined otherwise lower bound may exceed terminal reward
-        retValuedAction.value = best_value * total_particle_weight;
+        retValuedAction.value = AstarScenario_avgenv_value_map_g[average_environment].value * total_particle_weight;
 
-        if (best_value > TERMINAL_REWARD_g) {
+        if (retValuedAction.value > TERMINAL_REWARD_g) {
             cout << "There was an ERROR: value cannot be greater than the terminal reward!" << endl;
         }
 

@@ -116,7 +116,10 @@ void astar_planner::get_path(vector<ACT_TYPE>& ret_all_path_actions){
         exit(1);
     }
     // clear the path vector before starting
-    ret_all_path_actions.clear();
+    if (ret_all_path_actions.size() > 0) {
+        ret_all_path_actions.clear();
+    }
+
     environment current_state_ptr;
     current_state_ptr = goal_state_m;
 
