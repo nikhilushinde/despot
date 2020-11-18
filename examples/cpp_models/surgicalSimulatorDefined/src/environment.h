@@ -71,6 +71,7 @@ public:
     int get_num_obstacles() const;
     void get_obstacle_ks(float *ret_obstacle_ks, int ret_array_len) const; // returns the obstacle k values via pass by value - array must be num_obstacles
     void get_current_obstacle_centers(environmentCoords *ret_obstacle_centers, int ret_array_len) const;
+    void get_current_deflection_directions(deflectionDirection deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g]); 
 
     void observe_points(cameraIntersectionPoint *ret_cam_intersection_points, int ret_array_size) const; // observes using the camera's scan_environment function and returns intersectoin points with the environment and the intersection types
     void observe_dists(cameraIntersectionDistance *ret_cam_intersection_dists, int ret_array_size) const; // observes using the camera's scan_environment_dists function and returns the intersection distances and types 

@@ -401,6 +401,15 @@ void environment::get_current_obstacle_centers(environmentCoords *ret_obstacle_c
     return;
 }
 
+void environment::get_current_deflection_directions(deflectionDirection deflection_directions[NUM_OBSTACLES_g][NUM_ROBOT_ARMS_g]) {
+    /*
+    * Fills deflection_directions with the deflection directions
+    */ 
+    for (int obs_num = 0; obs_num < NUM_OBSTACLES_g; obs_num ++) {
+        obstacles_m[obs_num].get_deflection_directions(deflection_directions[obs_num], NUM_ROBOT_ARMS_g);
+    }
+}
+
 // Camera observation functions
 void environment::observe_points(cameraIntersectionPoint *ret_cam_intersection_points, int ret_array_size) const{
     /*
